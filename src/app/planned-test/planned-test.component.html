@@ -1,0 +1,75 @@
+<div class="main-content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card">
+            <!-- Header -->
+            <div class="header d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="title mb-0">Planned Tests</h4>
+                <p class="category">List of scheduled QoS tests</p>
+              </div>
+              <button class="btn btn-primary" (click)="onNewPlannedTest()">New Planned Test</button>
+            </div>
+  
+            <!-- Table -->
+            <div class="content table-responsive table-full-width">
+              <table class="table table-hover table-striped">
+                <thead>
+                  <tr>
+                    <th *ngFor="let cell of tableData.headerRow">{{ cell }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of tableData.dataRows">
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.duration }}</td>
+                    <td>{{ row.numberOfAgents }}</td>
+                    <td>{{ row.createdAt }}</td>
+                    <td>
+                      <i class="fa fa-eye text-info me-2" (click)="onView(row)" style="cursor:pointer;" title="View"></i>
+                      <i class="fa fa-trash text-danger" (click)="onDelete(row)" style="cursor:pointer;" title="Delete"></i>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Popup -->
+    <div class="popup-overlay" *ngIf="selectedTest">
+      <div class="popup-box">
+        <div class="popup-header">
+          <h5 class="modal-title">Planned Test Details</h5>
+          <button class="btn-close" (click)="closePopup()">×</button>
+        </div>
+  
+        <div class="popup-body">
+          <table class="table table-bordered">
+            <tbody>
+              <tr>
+                <th>Test Name</th>
+                <td>{{ selectedTest.name }}</td>
+              </tr>
+              <tr>
+                <th>Duration</th>
+                <td>{{ selectedTest.duration }}</td>
+              </tr>
+              <tr>
+                <th>Number of Agents</th>
+                <td>{{ selectedTest.numberOfAgents }}</td>
+              </tr>
+              <tr>
+                <th>Created At</th>
+                <td>{{ selectedTest.createdAt }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  

@@ -1,0 +1,35 @@
+.quick-test-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;  /* Espacement entre les champs */
+    width: 300px;  /* Largeur du formulaire */
+    margin: 20px auto;
+  }
+  
+  .quick-test-form label {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #333;
+  }
+  
+  .quick-test-form input {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .quick-test-form button {
+    padding: 10px;
+    background-color: #1abc9c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .quick-test-form button:hover {
+    background-color: #16a085;
+  }
+  

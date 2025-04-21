@@ -1,0 +1,44 @@
+<div class="main-content">
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Premier tableau -->
+        <div class="col-md-12">
+          <div class="card">
+            <!-- Titre + Bouton New Agent -->
+            <div class="header d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="title mb-0">Striped Table with Hover</h4>
+                <p class="category">Here is a subtitle for this table</p>
+              </div>
+              <button class="btn btn-primary" (click)="onNewAgent()">New Agent</button>
+            </div>
+  
+            <!-- Tableau -->
+            <div class="content table-responsive table-full-width">
+              <table class="table table-hover table-striped">
+                <thead>
+                  <tr>
+                    <th *ngFor="let cell of tableData1.headerRow">{{ cell }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of tableData1.dataRows">
+                    <td *ngFor="let cell of row; let i = index">
+                      <!-- Si c’est la colonne “Action” -->
+                      <ng-container *ngIf="i === row.length - 1; else normalCell">
+                        <i class="fa fa-check text-success me-2" title="Valider" style="cursor: pointer;"></i>
+                        <i class="fa fa-pencil text-warning me-2" title="Modifier" style="cursor: pointer;"></i>
+                        <i class="fa fa-trash text-danger" title="Supprimer" style="cursor: pointer;"></i>
+                      </ng-container>
+                      <ng-template #normalCell>{{ cell }}</ng-template>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
