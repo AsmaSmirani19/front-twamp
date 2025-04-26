@@ -1,0 +1,66 @@
+/* Popup Overlay */
+.popup-overlay {
+    position: fixed;  /* Fixe la position de la popup */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);  /* Fond semi-transparent */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Assure que la popup soit au-dessus de tout */
+  }
+  
+  /* Boîte de la popup */
+  .popup-box {
+    background: white;
+    width: 500px; /* Largeur de la popup */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Header de la popup */
+  .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .popup-header h5 {
+    margin: 0;
+  }
+  
+  /* Bouton de fermeture */
+  .btn-close {
+    font-size: 1.5rem;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #888;
+  }
+  
+  /* Corps de la popup */
+  .popup-body {
+    padding: 10px 0;
+  }
+  
+  /* Bouton "Submit" */
+  button.btn {
+    width: 20%;
+  }
+  
+  /* Animation pour la transition de la popup (facultatif) */
+  .popup-box {
+    animation: popupAnim 0.3s ease-in-out;
+  }
+  
+  @keyframes popupAnim {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  

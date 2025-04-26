@@ -15,6 +15,8 @@ export const ROUTES: RouteInfo[] = [
     { path: '/quick-test', title: 'Quick Test ',  icon:'pe-7s-note2', class: '' },
     { path: '/planned-test', title: 'Planned Test ',  icon:'pe-7s-note2', class: '' },
     { path: '/test-result', title: 'Test Result ',  icon:'pe-7s-note2', class: '' },
+    { path: '/test-profile', title: 'Test Profile ',  icon:'pe-7s-note2', class: '' },
+    { path: '/threshold', title: 'Threshold ',  icon:'pe-7s-note2', class: '' },
     { path: '/typography', title: 'Typography',  icon:'pe-7s-news-paper', class: '' },
     { path: '/icons', title: 'Icons',  icon:'pe-7s-science', class: '' },
     { path: '/maps', title: 'Maps',  icon:'pe-7s-map-marker', class: '' },

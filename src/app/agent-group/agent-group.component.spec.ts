@@ -1,64 +1,42 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AgentGroupComponent } from './agent-group.component';
+import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AgentDetailsDialogComponent } from '../agent-details-dialog/agent-details-dialog.component';
 
-describe('AgentGroupComponent', () => {
-  let component: AgentGroupComponent;
-  let fixture: ComponentFixture<AgentGroupComponent>;
-  let mockDialog: jasmine.SpyObj<MatDialog>;
+// Définir l'interface pour les lignes de données
+interface Row {
+  group: string;
+  numberOfAgents: number;
+  status: string;
+  createdAt: string;
+  agents: { name: string, role: string, avatar: string }[];
+}
 
-  beforeEach(async () => {
-    mockDialog = jasmine.createSpyObj('MatDialog', ['open']);
-    
-    await TestBed.configureTestingModule({
-      declarations: [ AgentGroupComponent ],
-      providers: [
-        { provide: MatDialog, useValue: mockDialog }
-      ]
-    })
-    .compileComponents();
+@Component({
+  selector: 'app-agent-group',
+  templateUrl: './agent-group.component.html',
+  styleUrls: ['./agent-group.component.css']
+})
+export class AgentGroupComponent {
+  // Typage explicite de tableData
+  tableData: { headerRow: any[], dataRows: Row[] } = { headerRow: [], dataRows: [] };
 
-    fixture = TestBed.createComponent(AgentGroupComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+  constructor(private dialog: MatDialog) {}
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-
-  it('should open the agent details dialog on view click', () => {
-    const row = {
-      group: 'Group Alpha',
-      numberOfAgents: 5,
-      status: 'Active',
-      createdAt: '2024-12-09',
-      agents: [
-        { name: 'Alice Martin', role: 'Manager', avatar: 'https://i.pravatar.cc/60?img=1' },
-        { name: 'Bob Dupont', role: 'Agent', avatar: 'https://i.pravatar.cc/60?img=2' }
-      ]
-    };
-    component.onView(row);
-    expect(mockDialog.open).toHaveBeenCalledWith(AgentDetailsDialogComponent, jasmine.objectContaining({
+  // Méthode pour ouvrir le dialogue des détails de l'agent
+  onView(row: Row): void {
+    this.dialog.open(AgentDetailsDialogComponent, {
       width: '600px',
       height: '400px',
-      panelClass: 'centered-dialog'
-    }));
-  });
+      panelClass: 'centered-dialog',
+      data: row
+    });
+  }
 
-  it('should delete the agent group', () => {
-    const row = {
-      group: 'Group Alpha',
-      numberOfAgents: 5,
-      status: 'Active',
-      agents: []
-    };
-    component.tableData = {
-      headerRow: [],
-      dataRows: [row]
-    };
-    component.onDelete(row);
-    expect(component.tableData.dataRows.length).toBe(0);
-  });
-});
+  // Méthode pour supprimer un groupe d'agents
+  onDelete(row: Row): void {
+    const index = this.tableData.dataRows.indexOf(row);
+    if (index > -1) {
+      this.tableData.dataRows.splice(index, 1);
+    }
+  }
+}

@@ -1,75 +1,173 @@
 <div class="main-content">
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="card">
-            <!-- Header -->
-            <div class="header d-flex justify-content-between align-items-center">
-              <div>
-                <h4 class="title mb-0">Planned Tests</h4>
-                <p class="category">List of scheduled QoS tests</p>
-              </div>
-              <button class="btn btn-primary" (click)="onNewPlannedTest()">New Planned Test</button>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <!-- Header -->
+          <div class="header d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="title mb-0">Planned Tests</h4>
+              <p class="category">List of scheduled QoS tests</p>
             </div>
-  
-            <!-- Table -->
-            <div class="content table-responsive table-full-width">
-              <table class="table table-hover table-striped">
-                <thead>
-                  <tr>
-                    <th *ngFor="let cell of tableData.headerRow">{{ cell }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let row of tableData.dataRows">
-                    <td>{{ row.name }}</td>
-                    <td>{{ row.duration }}</td>
-                    <td>{{ row.numberOfAgents }}</td>
-                    <td>{{ row.createdAt }}</td>
-                    <td>
-                      <i class="fa fa-eye text-info me-2" (click)="onView(row)" style="cursor:pointer;" title="View"></i>
-                      <i class="fa fa-trash text-danger" (click)="onDelete(row)" style="cursor:pointer;" title="Delete"></i>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <button class="btn btn-primary" (click)="onNewPlannedTest()">New Planned Test</button>
           </div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Popup -->
-    <div class="popup-overlay" *ngIf="selectedTest">
-      <div class="popup-box">
-        <div class="popup-header">
-          <h5 class="modal-title">Planned Test Details</h5>
-          <button class="btn-close" (click)="closePopup()">×</button>
-        </div>
-  
-        <div class="popup-body">
-          <table class="table table-bordered">
-            <tbody>
-              <tr>
-                <th>Test Name</th>
-                <td>{{ selectedTest.name }}</td>
-              </tr>
-              <tr>
-                <th>Duration</th>
-                <td>{{ selectedTest.duration }}</td>
-              </tr>
-              <tr>
-                <th>Number of Agents</th>
-                <td>{{ selectedTest.numberOfAgents }}</td>
-              </tr>
-              <tr>
-                <th>Created At</th>
-                <td>{{ selectedTest.createdAt }}</td>
-              </tr>
-            </tbody>
-          </table>
+
+          <!-- Table -->
+      <!-- Table -->
+<div class="content table-responsive table-full-width">
+  <table class="table table-hover table-striped">
+    <thead>
+      <tr>
+        <th *ngFor="let cell of tableData.headerRow">{{ cell }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of tableData.dataRows">
+        <!-- ✅ Colonne Control en premier -->
+        <td>
+          <span class="control-icon" (click)="toggleControl(row)">
+            <i class="fa" [ngClass]="row.isPaused ? 'fa-play' : 'fa-pause'"></i>
+          </span>
+        </td>
+
+        <!-- ✅ Colonne Test Name -->
+        <td>{{ row.name }}</td>
+
+        <!-- ✅ Colonne Test Duration -->
+        <td>{{ row.duration }}</td>
+
+        <!-- ✅ Colonne Number of Agents -->
+        <td>{{ row.numberOfAgents }}</td>
+
+        <!-- ✅ Colonne Creation Date -->
+        <td>{{ row.createdAt | date: 'short' }}</td>
+
+        <!-- ✅ Colonne Actions -->
+        <td>
+          <i class="fa fa-eye text-info me-2" (click)="onView(row)" style="cursor:pointer;" title="View"></i>
+          <i class="fa fa-trash text-danger" (click)="onDelete(row)" style="cursor:pointer;" title="Delete"></i>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
         </div>
       </div>
     </div>
   </div>
-  
+
+  <!-- Details Popup -->
+  <div class="popup-overlay" *ngIf="selectedTest">
+    <div class="popup-box">
+      <div class="popup-header">
+        <h5 class="modal-title">Planned Test Details</h5>
+        <button class="btn-close" (click)="closePopup()">×</button>
+      </div>
+
+      <div class="popup-body">
+        <table class="table table-bordered">
+          <tbody>
+            <tr>
+              <td><span class="control-icon" (click)="toggleControl(selectedTest)">
+                <i [ngClass]="{'fa-pause': selectedTest.isPaused, 'fa-play': !selectedTest.isPaused}"></i></span>
+              </td>
+            </tr>
+            <tr><th>Test Name</th><td>{{ selectedTest.name }}</td></tr>
+            <tr><th>Duration</th><td>{{ selectedTest.duration }}</td></tr>
+            <tr><th>Number of Agents</th><td>{{ selectedTest.numberOfAgents }}</td></tr>
+            <tr><th>Created At</th><td>{{ selectedTest.createdAt | date: 'short' }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wizard Popup -->
+  <div class="wizard-overlay" *ngIf="showWizard">
+    <div class="wizard-popup">
+      <!-- Header -->
+      <div class="wizard-header d-flex justify-content-between align-items-center">
+        <h5>Create new test plan</h5>
+        <button class="btn-close" (click)="cancelWizard()">×</button>
+      </div>
+
+      <!-- Stepper -->
+      <div class="wizard-steps d-flex justify-content-between text-center my-3">
+        <div [class.active]="wizardStep === 1">Initial Config<br><small>Name & Duration</small></div>
+        <div [class.active]="wizardStep === 2">Groups<br><small>Groups & Tests</small></div>
+        <div [class.active]="wizardStep === 3">Profiles<br><small>Targets & profiles</small></div>
+      </div>
+
+      <!-- Step 1 -->
+      <div *ngIf="wizardStep === 1" class="wizard-step">
+        <div class="mb-3">
+          <label>Test Plan Name</label>
+          <input type="text" class="form-control" [(ngModel)]="testPlan.name" />
+        </div>
+        <div class="mb-3">
+          <label>Test Duration</label>
+          <input type="text" class="form-control" [(ngModel)]="testPlan.duration" />
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div *ngIf="wizardStep === 2" class="wizard-step">
+        <div class="mb-3">
+          <label class="form-label">Source is :</label>
+          <div class="btn-group">
+            <button class="btn"
+                    [ngClass]="{ 'btn-primary': sourceType === 'group', 'btn-outline-primary': sourceType !== 'group' }"
+                    (click)="sourceType = 'group'">
+              Agent Group
+            </button>
+            <button class="btn"
+                    [ngClass]="{ 'btn-primary': sourceType === 'single', 'btn-outline-primary': sourceType !== 'single' }"
+                    (click)="sourceType = 'single'">
+              Single Agent
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label *ngIf="sourceType === 'group'" class="form-label">Select Group Agent</label>
+          <label *ngIf="sourceType === 'single'" class="form-label">Select Agent</label>
+          <select class="form-control">
+            <option *ngFor="let agent of agentOptions" [value]="agent">{{ agent }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div *ngIf="wizardStep === 3" class="wizard-step">
+        <div class="mb-3">
+          <label class="form-label">Select Target</label>
+          <select class="form-control">
+            <option *ngFor="let target of targetOptions" [value]="target">{{ target }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">QoS Profile</label>
+          <select class="form-control">
+            <option *ngFor="let profile of qosProfiles" [value]="profile">{{ profile }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Threshold</label>
+          <input type="text" class="form-control" placeholder="Enter threshold value (e.g. 150ms)" />
+        </div>
+      </div>
+
+      <!-- Wizard Footer -->
+      <div class="wizard-footer d-flex justify-content-between mt-4">
+        <button class="btn btn-secondary" [disabled]="wizardStep === 1" (click)="prevStep()">Previous</button>
+        <button class="btn btn-primary"
+                *ngIf="wizardStep < 3"
+                (click)="nextStep()">Next</button>
+        <button class="btn btn-success"
+                *ngIf="wizardStep === 3"
+                (click)="finishWizard()">Finish</button>
+      </div>
+
+    </div>
+  </div>
+</div>
