@@ -13,103 +13,151 @@
             <button class="btn btn-primary" (click)="onNewAgentGroup()">New Agent Group</button>
           </div>
 
-          <!-- Tableau -->
-          <div class="content table-responsive table-full-width">
-            <table class="table table-hover table-striped">
-              <thead>
-                <tr>
-                  <th *ngFor="let cell of tableData.headerRow">{{ cell }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let row of tableData.dataRows">
-                  <td>{{ row.group }}</td>
-                  <td>
-                    <input
-                      type="number"
-                      class="form-control"
-                      [(ngModel)]="row.numberOfAgents"
-                      min="0"
-                      style="width: 80px;"
-                    />
-                  </td>
-                  <td>{{ row.status }}</td>
-                  <td>
-                    <i
-                      class="fa fa-eye text-info me-2"
-                      title="Voir"
-                      style="cursor: pointer;"
-                      (click)="onView(row)"
-                    ></i>
-                    <i class="fa fa-pencil text-warning me-2" title="Modifier" style="cursor: pointer;"></i>
-                    <i class="fa fa-trash text-danger" title="Supprimer" style="cursor: pointer;"></i>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+<!-- Tableau -->
+<div class="content table-responsive table-full-width">
+  <table class="table table-hover table-striped">
+    <thead>
+      <tr>
+        <th *ngFor="let cell of tableData.headerRow">{{ cell }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of tableData.dataRows">
+        <td>{{ row.group_name }}</td>
+        <td>{{ row.agents?.length || 0 }}</td> <!-- Modifié ici -->
+        <td>{{ row.creation_date }}</td>
+        <td>
+          <i class="fa fa-eye text-info me-2" title="Voir" style="cursor: pointer;" (click)="onView(row)"></i>
+          <i class="fa fa-pencil text-warning me-2" title="Modifier" style="cursor: pointer;" (click)="onEdit(row)"></i>
+          <i class="fa fa-trash text-danger" title="Supprimer" style="cursor: pointer;" (click)="onDelete(row)"></i>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
+<!-- Popup de création -->
+<div class="popup-overlay" *ngIf="newGroupPopupVisible">
+  <div class="popup-box text-start">
+    <div class="popup-header d-flex justify-content-between align-items-center">
+      <h5 class="modal-title">Create New Agent Group</h5>
+      <button class="btn-close" (click)="closeNewGroupPopup()" aria-label="Close">&#10006;</button>
+    </div>
+
+    <div class="popup-body">
+      <!-- Group Name -->
+      <div class="form-group mb-3">
+        <label class="form-label fw-bold">Group name</label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="newGroup.group_name"
+          name="group_name"
+          required
+        />
+      </div>
+
+      <hr>
+
+      <!-- Agents Selection -->
+      <div class="form-group mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <label class="form-label fw-bold">Selected Agents: {{newGroup.agents.length}}</label> <!-- Modifié ici -->
+          <div class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="selectAll"
+              [checked]="newGroup.agents.length === filteredAgents.length"
+              (change)="toggleSelectAll($event.target.checked)"
+            />
+            <label class="form-check-label" for="selectAll">Select All</label>
+          </div>
         </div>
+
+        <input
+          type="text"
+          class="form-control mb-2"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search for an agent"
+        />
+
+        <div *ngIf="filteredAgents.length > 0; else noResults">
+          <div *ngFor="let agent of filteredAgents" class="mb-2">
+            <div class="form-check">
+              <input
+                type="checkbox"
+                [checked]="isAgentSelected(agent)"
+                (change)="toggleAgentSelection(agent)"
+                [id]="'agent-' + agent.id"
+                class="form-check-input"
+              />
+              <label class="form-check-label" [for]="'agent-' + agent.id">
+                {{ agent.name }} <small class="text-muted">({{ agent.domain || 'No domain' }})</small>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noResults>
+          <div class="alert alert-warning">No agents found</div>
+        </ng-template>
+
+        <hr>
+
+        <button type="submit" class="btn btn-success w-100" (click)="createGroup()">Create</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ✅ Popup personnalisée -->
-  <div class="popup-overlay" *ngIf="selectedGroup">
-    <div class="popup-box">
-      <!-- Header avec X -->
-      <div class="popup-header">
-        <h5 class="modal-title">Show Agent Group</h5>
-        <button class="btn-close" (click)="closePopup()" aria-label="Close">&#10006;</button>
+<!-- Popup de visualisation -->
+<div class="popup-overlay" *ngIf="viewGroupPopupVisible">
+  <div class="popup-box text-start">
+    <!-- Header -->
+    <div class="popup-header d-flex justify-content-between align-items-center">
+      <h5 class="modal-title">Détails du Groupe</h5>
+      <button class="btn-close" (click)="closeViewGroupPopup()">×</button>
+    </div>
+
+    <div class="popup-body">
+      <!-- Group Info -->
+      <div class="form-group mb-3">
+        <label class="form-label fw-bold">Nom du groupe</label>
+        <input type="text" class="form-control" [value]="selectedGroup?.group_name" disabled>
       </div>
 
-      <div class="popup-body">
-        <h6 class="fw-bold">Agent Group Info</h6>
-        <table class="table table-bordered mt-2">
-          <tbody>
-            <tr>
-              <th>Group Name</th>
-              <td>{{ selectedGroup?.group }}</td>
-            </tr>
-            <tr>
-              <th>Number of agent</th>
-              <td>{{ selectedGroup?.numberOfAgents }}</td>
-            </tr>
-            <tr>
-              <th>Created At</th>
-              <td>{{ selectedGroup?.createdAt }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Agents Count -->
+      <div class="form-group mb-3">
+        <label class="form-label fw-bold">Nombre d'agents</label>
+        <input type="text" class="form-control" 
+               [value]="selectedGroup?.agents?.length || 0" disabled>
+      </div>
 
-        <div class="row mt-4">
-          <div class="col-md-4">
-            <ul class="list-group">
-              <li
-                class="list-group-item"
-                *ngFor="let agent of selectedGroup?.agents; let i = index"
-              >
-                {{ i + 1 }} - <a href="#" class="text-primary">{{ agent.name }}</a>
-              </li>
-            </ul>
-          </div>
-
-          <div class="col-md-8">
-            <h6 class="fw-bold">Profiles</h6>
-            <table class="table table-bordered">
-              <tbody>
-                <tr>
-                  <th>hostname</th>
-                  <td>{{ selectedGroup?.agents[2]?.name }}</td>
-                </tr>
-                <tr>
-                  <th>group</th>
-                  <td>test</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <!-- Agents List -->
+      <div class="form-group mb-3">
+        <label class="form-label fw-bold">Liste des agents</label>
+        <div *ngIf="(selectedGroup?.agents?.length || 0) > 0; else noAgents">
+          <ul class="list-group">
+            <li class="list-group-item" *ngFor="let agent of selectedGroup?.agents">
+              <div class="d-flex justify-content-between">
+                <span>{{ agent.name }}</span>
+                <small class="text-muted">{{ agent.domain || 'Sans domaine' }}</small>
+              </div>
+            </li>
+          </ul>
         </div>
+        <ng-template #noAgents>
+          <div class="alert alert-warning py-2 mb-0">Aucun agent dans ce groupe</div>
+        </ng-template>
+      </div>
+
+      <!-- Creation Date -->
+      <div class="form-group">
+        <label class="form-label fw-bold">Date de création</label>
+        <input type="text" class="form-control" 
+               [value]="selectedGroup?.creation_date | date:'medium'" disabled>
       </div>
     </div>
   </div>

@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -15,10 +16,13 @@ import { AgentGroupComponent } from '../../agent-group/agent-group.component';
 import { QuickTestComponent } from '../../quick-test/quick-test.component';
 import { PlannedTestComponent } from '../../planned-test/planned-test.component';
 import { TestResultComponent } from '../../test-result/test-result.component';
+import { TestProfileComponent } from '../../test-profile/test-profile.component';
+import { ThresholdComponent } from '../../threshold/threshold.component';
 import { TypographyComponent } from '../../typography/typography.component';
 import { IconsComponent } from '../../icons/icons.component';
 import { MapsComponent } from '../../maps/maps.component';
 import { NotificationsComponent } from '../../notifications/notifications.component';
+
 
 
 
@@ -28,6 +32,7 @@ import { NotificationsComponent } from '../../notifications/notifications.compon
     RouterModule.forChild(AdminLayoutRoutes),
     FormsModule,
     LbdModule,
+    
     NguiMapModule.forRoot({apiUrl: 'https://maps.google.com/maps/api/js?key=YOUR_KEY_HERE'})
   ],
   declarations: [
@@ -38,6 +43,8 @@ import { NotificationsComponent } from '../../notifications/notifications.compon
     QuickTestComponent,
     PlannedTestComponent,
     TestResultComponent,
+    TestProfileComponent,
+    ThresholdComponent,
     TypographyComponent,
     IconsComponent,
     MapsComponent,

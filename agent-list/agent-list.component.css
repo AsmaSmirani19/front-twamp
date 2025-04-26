@@ -1,0 +1,118 @@
+.main-content {
+  padding: 20px;
+  background-color: #F9FAFB; /* Fond gris clair */
+}
+
+.header {
+  padding: 20px;
+  border-bottom: 1px solid #eee; /* Bordure de séparation */
+  color: #1F2937; /* Gris foncé pour le texte */
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1F2937; /* Gris foncé pour le texte */
+}
+
+.category {
+  font-size: 0.9rem;
+  color: #1F2937; /* Gris foncé pour le texte */
+}
+
+button.btn {
+  font-weight: 500;
+  margin-top: 10px;
+  background-color: #6366F1; /* Couleur principale pour le fond */
+  color: white; /* Couleur du texte */
+  border: none; /* Enlever les bordures */
+  transition: background-color 0.3s ease; /* Ajouter une transition au survol */
+}
+
+button.btn:hover {
+  background-color: #4f46e5; /* Couleur de survol (plus foncée) */
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-box {
+  background: #fff;
+  padding: 20px 25px;
+  border-radius: 10px;
+  width: 50%;
+  max-width: 950px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.popup-header .modal-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.popup-header .btn-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+.popup-body {
+  padding-top: 1rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+/* Correction du sélecteur .form-group et ajout des styles à l'intérieur */
+.form-group label {
+  font-weight: 600;
+}
+
+.form-group input.form-control {
+  border-radius: 5px;
+  box-shadow: none;
+  border: 1px solid #E5E7EB; /* Bordure gris clair */
+  background-color: #F3F4F6; /* Fond gris doux */
+}
+
+.form-group input.form-control:focus {
+  border-color: #6366F1; /* Appliquer la couleur primaire sur focus */
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25); /* Appliquer une lueur pour l'effet de focus */
+}
+
+@media (max-width: 768px) {
+  .popup-footer {
+    justify-content: center;
+    flex-direction: column;
+  }
+}
+
+/* --- Footer de la popup --- */
+.popup-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 19px;
+  margin-top: 20px;
+}

@@ -1,44 +1,129 @@
 <div class="main-content">
-    <div class="container-fluid">
-      <div class="row">
-        <!-- Premier tableau -->
-        <div class="col-md-12">
-          <div class="card">
-            <!-- Titre + Bouton New Agent -->
-            <div class="header d-flex justify-content-between align-items-center">
-              <div>
-                <h4 class="title mb-0">Striped Table with Hover</h4>
-                <p class="category">Here is a subtitle for this table</p>
-              </div>
-              <button class="btn btn-primary" (click)="onNewAgent()">New Agent</button>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="header d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="title mb-1">Agent List</h4>
+              <p class="category">Status overview with Test Health and Availability</p>
             </div>
-  
-            <!-- Tableau -->
-            <div class="content table-responsive table-full-width">
-              <table class="table table-hover table-striped">
-                <thead>
-                  <tr>
-                    <th *ngFor="let cell of tableData1.headerRow">{{ cell }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let row of tableData1.dataRows">
-                    <td *ngFor="let cell of row; let i = index">
-                      <!-- Si c’est la colonne “Action” -->
-                      <ng-container *ngIf="i === row.length - 1; else normalCell">
-                        <i class="fa fa-check text-success me-2" title="Valider" style="cursor: pointer;"></i>
-                        <i class="fa fa-pencil text-warning me-2" title="Modifier" style="cursor: pointer;"></i>
-                        <i class="fa fa-trash text-danger" title="Supprimer" style="cursor: pointer;"></i>
-                      </ng-container>
-                      <ng-template #normalCell>{{ cell }}</ng-template>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <button class="btn btn-primary btn-new-agent" (click)="onNewAgent()">
+              <i class="fa fa-plus me-2"></i>New Agent
+            </button>
+          </div>
+
+          <div class="content table-responsive table-full-width">
+            <table class="table table-hover table-modern">
+              <thead>
+                <tr>
+                  <th *ngFor="let header of headerRow">{{ header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let agent of filteredAgents; let i = index">
+
+                  <td class="text-muted">#{{ agent.id }}</td>
+                  <td class="fw-medium">{{ agent.name }}</td>
+                  <td>{{ agent.address }}</td>
+                  <td>
+                    <i class="fa fa-circle"
+                      [ngClass]="agent.testHealth ? 'text-success' : 'text-danger'"
+                      [title]="agent.testHealth ? 'Healthy' : 'Unhealthy'">
+                    </i>
+                  </td>
+                  <td>
+                    <span class="badge availability-badge"
+                      [ngClass]="{
+                        'bg-success': agent.availability >= 99,
+                        'bg-warning': agent.availability >= 80 && agent.availability < 99,
+                        'bg-danger': agent.availability < 80
+                      }">
+                      {{ agent.availability.toFixed(1) }}%
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn btn-sm btn-icon btn-success me-1" title="Validate">
+                        <i class="fa fa-check"></i>
+                      </button>
+                      <button class="btn btn-sm btn-icon btn-warning me-1" title="Edit">
+                        <i class="fa fa-pencil"></i>
+                      </button>
+                      <button class="btn btn-sm btn-icon btn-danger" title="Delete" (click)="deleteAgent(i)">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <div class="popup-overlay" *ngIf="newAgentPopupVisible">
+    <div class="popup-box">
+      <div class="popup-header">
+        <h5 class="modal-title">Create New Agent</h5>
+        <button class="btn-close" (click)="newAgentPopupVisible = false" aria-label="Close">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
   
+      <div class="popup-body">
+        <form class="agent-form">
+          <!-- Champ Nom -->
+          <div class="form-group mb-3">
+            <label class="form-label">Name:</label>
+            <input type="text" 
+                   class="form-control modern-input"
+                   [(ngModel)]="newAgent.name"
+                   name="name"
+                   placeholder="Enter agent name">
+          </div>
+          
+  
+          <!-- Ligne Adresse + Port -->
+          <div class="row">
+            <!-- Champ Adresse -->
+            <div class="col-md-8 form-group mb-3">
+              <label class="form-label">Address:</label>
+              <input type="text" 
+                     class="form-control modern-input"
+                     [(ngModel)]="newAgent.address"
+                     name="address"
+                     placeholder="192.168.1.10">
+            </div>
+            
+            <!-- Champ Port -->
+            <div class="col-md-4 form-group mb-3">
+              <label class="form-label">Port:</label>
+              <input type="number" 
+                     class="form-control modern-input"
+                     [(ngModel)]="newAgent.port"
+                     name="port"
+                     placeholder="8080">
+            </div>
+          </div>
+  
+          <!-- Boutons -->
+          <div class="form-footer d-flex justify-content-end mt-4">
+            <button type="button" 
+                    class="btn btn-outline-secondary me-3" 
+                    (click)="newAgentPopupVisible = false">
+              Cancel
+            </button>
+            <button type="button" 
+                    class="btn btn-primary" 
+                    (click)="createAgent()">
+              Create Agent
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
