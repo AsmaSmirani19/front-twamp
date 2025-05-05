@@ -1,76 +1,127 @@
+/* Overlay de la fenêtre modale */
 .wizard-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1050;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .wizard-popup {
-    background: white;
-    border-radius: 8px;
-    width: 700px;
-    max-width: 95%;
-    padding: 24px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-    position: relative;
-  }
-  
-  .wizard-header {
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-  }
-  
-  .btn-close {
-    background: transparent;
-    border: none;
-    font-size: 1.5rem;
-    line-height: 1;
-    cursor: pointer;
-  }
-  
-  .wizard-steps {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    text-align: center;
-    font-size: 14px;
-  }
-  
-  .wizard-steps div {
-    flex: 1;
-    padding: 10px;
-    border-bottom: 2px solid #ccc;
-  }
-  
-  .wizard-steps .active {
-    font-weight: bold;
-    color: #007bff;
-    border-bottom: 3px solid #007bff;
-  }
-  
-  .wizard-step {
-    margin-bottom: 20px;
-  }
-  
-  .wizard-footer {
-    border-top: 1px solid #eee;
-    padding-top: 15px;
-  }
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Ombre d'arrière-plan */
+  z-index: 1050;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  .control-icon i {
-    font-size: 18px;
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  .control-icon i:hover {
-    transform: scale(1.2);
-  }
-  
-  
+/* Fenêtre modale avec bords arrondis et ombre */
+.wizard-popup {
+  background: #FFFFFF; /* Fond blanc */
+  border-radius: 8px;
+  width: 700px;
+  max-width: 95%;
+  padding: 24px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+/* En-tête de la fenêtre modale */
+.wizard-header {
+  border-bottom: 1px solid #E5E7EB; /* Séparateur gris clair */
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  font-size: 1.25rem;
+  color: #1F2937; /* Gris foncé pour les textes */
+  font-weight: 600;
+}
+
+/* Bouton de fermeture de la fenêtre modale */
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #1F2937; /* Gris foncé pour le texte */
+}
+
+.btn-close:hover {
+  color: #6366F1; /* Indigo 500 */
+}
+
+/* Etapes du wizard */
+.wizard-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #1F2937; /* Gris foncé pour le texte */
+}
+
+.wizard-steps div {
+  flex: 1;
+  padding: 10px;
+  border-bottom: 2px solid #E5E7EB; /* Séparateur gris clair */
+  transition: border-color 0.3s ease;
+}
+
+.wizard-steps div:hover {
+  border-bottom: 2px solid #6366F1; /* Indigo 500 au survol */
+}
+
+/* Etape active avec surlignage */
+.wizard-steps .active {
+  font-weight: bold;
+  color: #6366F1; /* Indigo 500 */
+  border-bottom: 3px solid #6366F1; /* Ligne active indigo */
+}
+
+/* Contenu de l'étape */
+.wizard-step {
+  margin-bottom: 20px;
+  color: #1F2937; /* Gris foncé pour le texte */
+}
+
+/* Pied de la fenêtre modale */
+.wizard-footer {
+  border-top: 1px solid #E5E7EB; /* Séparateur gris clair */
+  padding-top: 15px;
+  text-align: right;
+}
+
+/* Icône de contrôle avec effet hover */
+.control-icon i {
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.2s, color 0.3s ease;
+  color: #1F2937; /* Gris foncé pour le texte */
+}
+
+.control-icon i:hover {
+  transform: scale(1.2);
+  color: #6366F1; /* Indigo 500 au survol */
+}
+
+/* Fond gris doux pour les blocs et inputs */
+.wizard-popup, .wizard-step, .wizard-footer {
+  background-color: #F3F4F6; /* Gris doux */
+}
+
+/* Fond de page gris clair */
+body {
+  background-color: #F9FAFB; /* Gris clair pour l'arrière-plan des pages */
+}
+
+/* Inputs, textareas et selects avec fond gris doux */
+input, textarea, select {
+  background-color: #F3F4F6; /* Gris doux pour les inputs */
+  border: 1px solid #E5E7EB; /* Bordure gris clair */
+  padding: 10px;
+  border-radius: 4px;
+  color: #1F2937; /* Gris foncé pour le texte */
+  font-size: 14px;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #6366F1; /* Indigo 500 au focus */
+  outline: none;
+}

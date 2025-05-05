@@ -1,5 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { PlannedTestService } from './planned-test.service';  // Assurez-vous que le chemin est correct
+import { PlannedTestService } from './planned-test.service';
+import { AgentGroupService, AgentGroup } from '../agent-group/agent-group.service';
+import { AgentService } from '../agent-list/agent.service'; 
+import { TestProfile } from '../test-profile/test-profile.model'; 
+import { TestProfileService } from '../test-profile/test-profile.service'; 
+import { ThresholdService } from '../threshold/threshold.service';
+
 
 export interface PlannedTest {
   name: string;
@@ -7,6 +13,10 @@ export interface PlannedTest {
   numberOfAgents: number;
   createdAt: string;
   isPaused: boolean;
+  agentGroupId?: string; 
+  agentId?: string;
+  testProfileId?: number;
+  thresholdName?: string;
 }
 
 @Component({
@@ -14,25 +24,46 @@ export interface PlannedTest {
   templateUrl: './planned-test.component.html',
   styleUrls: ['./planned-test.component.scss']
 })
-
 export class PlannedTestComponent implements OnInit {
-  tableData: { 
-    headerRow: string[];
-    dataRows: PlannedTest[];
-  } = { 
+  tableData = {
     headerRow: ['Control', 'Test Name', 'Test Duration', 'Number of Agents', 'Creation Date', 'Action'],
-    dataRows: []
+    dataRows: [] as PlannedTest[]
   };
 
   selectedTest: PlannedTest | null = null;
   showWizard = false;
   wizardStep = 1;
-  testPlan: { name: string; duration: string; } = { name: '', duration: '' };
 
-  // Injection du service dans le constructeur
-  constructor(private plannedTestService: PlannedTestService) {}
+  testPlan = { name: '', duration: '' };
+  selectedAgentGroupId: string | null = null;
+  selectedAgentId: string | null = null;
+  selectedTestProfileId: number | null = null;
+  selectedThreshold: string | null = null;
+
+  qosProfiles: TestProfile[] = [];
+  agentGroups: AgentGroup[] = [];
+  agentOptions: string[] = [];
+  agents: any[] = [];
+  thresholds: any[] = []; 
+
+  constructor(
+    private plannedTestService: PlannedTestService,
+    private agentGroupService: AgentGroupService,
+    private agentService: AgentService,
+    private testProfileService: TestProfileService,
+    private thresholdService: ThresholdService
+  ) {}
 
   ngOnInit(): void {
+    this.refreshPlannedTests();
+    this.loadAgentGroups();
+    this.loadAgents();
+    this.loadTestProfiles();
+    this.loadThresholds();
+    
+  }
+
+  refreshPlannedTests(): void {
     this.plannedTestService.getPlannedTests().subscribe({
       next: (testsFromAPI: any[]) => {
         if (Array.isArray(testsFromAPI)) {
@@ -41,10 +72,8 @@ export class PlannedTestComponent implements OnInit {
             duration: test.test_duration,
             numberOfAgents: test.number_of_agents,
             createdAt: test.creation_date,
-            isPaused: false  // valeur par défaut car elle n'est pas envoyée par l'API
+            isPaused: false
           }));
-          console.log('headerRow:', this.tableData.headerRow); // Log pour vérifier l'ordre
-          console.log('dataRows:', this.tableData.dataRows); // Log pour vérifier les données
         } else {
           console.error('Données invalides reçues');
         }
@@ -54,12 +83,77 @@ export class PlannedTestComponent implements OnInit {
       }
     });
   }
+
+  loadAgentGroups(): void {
+    this.agentGroupService.getAgentGroups().subscribe({
+      next: (groups: AgentGroup[]) => {
+        console.log('Groupes d\'agents récupérés:', groups);
+        this.agentGroups = groups;
+        this.updateAgentOptions();
+      },
+      error: (err) => {
+        console.error('Erreur lors de la récupération des groupes d\'agents :', err);
+      }
+    });
+  }
+
+
+  loadAgents(): void {
+    this.agentService.getAgents().subscribe({
+      next: (agents) => {
+        console.log('Agents récupérés:', agents);
+        this.agents = agents;
+      },
+      error: (err) => {
+        console.error('Erreur lors de la récupération des agents :', err);
+      }
+    });
+  }
+
+  loadTestProfiles(): void {
+    this.testProfileService.getTestProfiles().subscribe({
+      next: (profiles: TestProfile[]) => {
+        this.qosProfiles = profiles;
+        console.log('QoS Profiles loaded:', profiles);
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des profils QoS :', error);
+      }
+    });
+  }
+
+  loadThresholds(): void {
+    this.thresholdService.getThresholds().subscribe({
+      next: (thresholds: any[]) => {
+        this.thresholds = thresholds;
+        console.log('Thresholds loaded:', thresholds); 
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des thresholds :', error);
+      }
+    });
+  }
   
+
+  updateAgentOptions(): void {
+    if (Array.isArray(this.agentGroups)) {
+      this.agentOptions = this.agentGroups.map(group => group.group_name);
+      console.log('Options d\'agents mises à jour:', this.agentOptions);
+    }
+  }
 
   onNewPlannedTest(): void {
     this.showWizard = true;
     this.wizardStep = 1;
+    this.resetTestPlan();
+  }
+
+  resetTestPlan(): void {
     this.testPlan = { name: '', duration: '' };
+    this.selectedAgentGroupId = null;
+    this.selectedAgentId = null;
+    this.selectedTestProfileId = null;
+    this.selectedThreshold = null; 
   }
 
   nextStep(): void {
@@ -72,7 +166,7 @@ export class PlannedTestComponent implements OnInit {
 
   cancelWizard(): void {
     this.showWizard = false;
-    this.testPlan = { name: '', duration: '' };
+    this.resetTestPlan();
   }
 
   createAndAddTest(): void {
@@ -80,26 +174,28 @@ export class PlannedTestComponent implements OnInit {
       console.error('Le nom et la durée du test sont obligatoires.');
       return;
     }
-  
+
     const durationNumber = parseInt(this.testPlan.duration.trim(), 10);
     if (isNaN(durationNumber) || durationNumber <= 0) {
       console.error('La durée doit être un nombre valide et supérieur à zéro.');
       return;
     }
-  
-    // ✅ Crée un objet compatible avec la struct Go
-    const goCompatibleTest = {
+
+    const newTest = {
       test_name: this.testPlan.name.trim(),
-      test_duration: this.testPlan.duration.trim() + 's', // Par exemple "60s"
+      test_duration: this.testPlan.duration.trim() + 's',
       number_of_agents: 0,
-      creation_date: new Date().toISOString()
+      creation_date: new Date().toISOString(),
+      agent_group_id: this.selectedAgentGroupId,
+      agent_id: this.selectedAgentId,
+      test_profile_id: this.selectedTestProfileId,
+      threshold_name: this.selectedThreshold
     };
-  
-    // Envoie l'objet vers l'API
-    this.plannedTestService.createPlannedTest(goCompatibleTest as any).subscribe({
-      next: (createdTest) => {
-        console.log('Test créé avec succès:', JSON.stringify(createdTest, null, 2));
-        this.tableData.dataRows.push(createdTest);
+
+    this.plannedTestService.createPlannedTest(newTest as any).subscribe({
+      next: () => {
+        console.log('Test créé avec succès');
+        this.refreshPlannedTests();
         this.cancelWizard();
       },
       error: (err) => {
@@ -107,7 +203,7 @@ export class PlannedTestComponent implements OnInit {
       }
     });
   }
-  
+
   submitWizard(): void {
     this.createAndAddTest();
   }
@@ -138,11 +234,6 @@ export class PlannedTestComponent implements OnInit {
   }
 
   trackByTestId(index: number, test: PlannedTest): string {
-    return test.createdAt;  // Utiliser un identifiant unique
+    return test.createdAt;
   }
-
-  sourceType: 'group' | 'single' = 'group';
-  agentOptions: string[] = ['Agent 1', 'Agent 2', 'Group A', 'Group B'];
-  targetOptions: string[] = ['Target A', 'Target B', 'Server 1', 'Server 2'];
-  qosProfiles: string[] = ['Default Profile', 'High Sensitivity', 'Low Latency', 'Custom Profile'];
 }

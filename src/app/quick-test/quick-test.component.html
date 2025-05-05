@@ -1,28 +1,50 @@
-<div class="quick-test-form">
-    <label for="name">Name</label>
-    <input type="text" id="name" name="name" placeholder="Enter test name" required>
-  
-    <label for="duration">Duration (in seconds)</label>
-    <input type="number" id="duration" name="duration" placeholder="Enter duration" required>
-  
-    <label for="agent-source">Agent Source</label>
-    <input type="text" id="agent-source" name="agent-source" placeholder="Enter source agent" required>
-  
-    <label for="agent-destination">Agent Destination</label>
-    <input type="text" id="agent-destination" name="agent-destination" placeholder="Enter destination agent" required>
-  
-    <label for="nb-tests">Number of Tests</label>
-    <input type="number" id="nb-tests" name="nb-tests" placeholder="Enter number of tests" required>
-  
-    <label for="qos-profile">QoS Profile</label>
-    <select id="qos-profile" name="qos-profile" required>
-      <option value="" disabled selected>Select QoS Profile</option>
-      <!-- Ajoute d'autres profils si besoin -->
-    </select>
-  
-    <label for="threshold">Threshold (%)</label>
-    <input type="number" id="threshold" name="threshold" placeholder="Enter threshold" required>
-  
-    <button type="submit">Start Quick Test</button>
+<form #form="ngForm" (ngSubmit)="onSubmit()">
+  <div class="form-group">
+    <label for="name">Test Name</label>
+    <input type="text" id="name" name="name" class="form-control" [(ngModel)]="testForm.name" required>
   </div>
-  
+
+  <div class="form-group">
+    <label for="duration">Test Duration (seconds)</label>
+    <input type="number" id="duration" name="duration" class="form-control" [(ngModel)]="testForm.duration" min="1" required>
+  </div>
+
+  <div class="form-group">
+    <label for="agentSource">Agent Source</label>
+    <select id="agentSource" name="agentSource" class="form-control" [(ngModel)]="testForm.agentSource" required>
+      <option value="" disabled selected>Select Agent Source</option>
+      <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="agentDestination">Agent Destination</label>
+    <select id="agentDestination" name="agentDestination" class="form-control" [(ngModel)]="testForm.agentDestination" required>
+      <option value="" disabled selected>Select Agent Destination</option>
+      <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="nbTests">Number of Tests</label>
+    <input type="number" id="nbTests" name="nbTests" class="form-control" [(ngModel)]="testForm.nbTests" min="1" required>
+  </div>
+
+  <div class="form-group">
+    <label for="qosProfile">QoS Profile</label>
+    <select id="qosProfile" name="qosProfile" class="form-control" [(ngModel)]="testForm.qosProfile" required>
+      <option value="" disabled selected>Select QoS Profile</option>
+      <option *ngFor="let profile of testProfiles" [value]="profile.id">{{ profile.profile_name }}</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="threshold">Threshold</label>
+    <select id="threshold" name="threshold" class="form-control" [(ngModel)]="testForm.threshold" required>
+      <option value="" disabled selected>Select Threshold</option>
+      <option *ngFor="let threshold of thresholds" [value]="threshold">{{ threshold }}</option>
+    </select>
+  </div>
+
+  <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Submit</button>
+</form>

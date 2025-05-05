@@ -24,7 +24,7 @@
     <tbody>
       <tr *ngFor="let row of tableData.dataRows">
         <td>{{ row.group_name }}</td>
-        <td>{{ row.agents?.length || 0 }}</td> <!-- Modifié ici -->
+        <td>{{ row.number_of_agents || 0 }}</td> 
         <td>{{ row.creation_date }}</td>
         <td>
           <i class="fa fa-eye text-info me-2" title="Voir" style="cursor: pointer;" (click)="onView(row)"></i>

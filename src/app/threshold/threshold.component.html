@@ -1,76 +1,117 @@
 <div class="main-content">
-    <div class="container-fluid">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="title mb-0">Thresholds</h4>
-        <button class="btn btn-sm btn-primary" (click)="showPopup = true">New Threshold</button>
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <button class="btn btn-sm btn-primary" (click)="showPopup = true">New Threshold</button>
+    </div>
+
+    <div class="card">
+      <div class="content table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Profile Name</th>
+              <th>Creation Date</th>
+              <th>Active Threshold</th>
+              <th>Disabled Threshold</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let threshold of thresholds">
+              <td>{{ threshold.profileName }}</td>
+              <td>{{ threshold.creationDate }}</td>
+              <td>
+                <ul>
+                  <li *ngFor="let item of threshold.activeThreshold.split(', ')">{{ item }}</li>
+                </ul>
+              </td>
+              <td>
+                <ul>
+                  <li *ngFor="let item of threshold.disabledThreshold.split(', ')">{{ item }}</li>
+                </ul>
+              </td>
+              <td>
+                <i class="fa fa-eye text-info me-2" (click)="onView(threshold)" style="cursor:pointer;"></i>
+                <i class="fa fa-trash text-danger" (click)="onDelete(threshold)" style="cursor:pointer;"></i>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-  
-      <div class="card">
-        <div class="content table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Profile Name</th>
-                <th>Creation Date</th>
-                <th>Active Threshold</th>
-                <th>Disabled Threshold</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let threshold of thresholds">
-                <td>{{ threshold.profileName }}</td>
-                <td>{{ threshold.creationDate }}</td>
-                <td>{{ threshold.activeThreshold }}</td>
-                <td>{{ threshold.disabledThreshold }}</td>
-                <td>
-                  <i class="fa fa-eye text-info me-2" (click)="onView(threshold)" style="cursor:pointer;"></i>
-                  <i class="fa fa-trash text-danger" (click)="onDelete(threshold)" style="cursor:pointer;"></i>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    </div>
+
+    <!-- Bloc par popup -->
+    <div class="popup-backdrop" *ngIf="showPopup">
+      <div class="popup-card">
+        <div class="popup-header d-flex justify-content-between align-items-center mb-3">
+          <h5>Create New Threshold</h5>
+          <button class="close-btn btn btn-sm" (click)="showPopup = false">×</button>
         </div>
-      </div>
-  
-      <!-- Popup Modal -->
-      <div class="popup-backdrop" *ngIf="showPopup">
-        <div class="popup-card">
-          <h5 class="mb-3">Create New Threshold</h5>
-          <div class="mb-3">
-            <label>Threshold Name</label>
-            <input class="form-control" [(ngModel)]="newThreshold.name" />
+
+        <div class="mb-3">
+          <label for="thresholdName">Threshold Name</label>
+          <input 
+            class="form-control" 
+            [(ngModel)]="newThreshold.name" 
+            id="thresholdName" 
+            placeholder="Threshold Demo"
+            required />
+        </div>
+
+        <div class="mb-3">
+          <label for="metricSelect">Select Metric</label>
+          <select 
+            class="form-control" 
+            [(ngModel)]="newThreshold.selectedMetric" 
+            id="metricSelect" 
+            (change)="onMetricChange()">
+            <option value="latency">Latency</option>
+            <option value="jitter">Jitter</option>
+            <option value="bandwidth">Bandwidth</option>
+            <option value="packetLoss">Packet Loss</option>
+          </select>
+        </div>
+
+        <!-- Bloc par métrique -->
+        <div class="threshold-section" *ngFor="let metric of thresholdMetrics; let i = index">
+          <div class="section-label fw-bold mb-2">{{ metric.label.toUpperCase() }} VALUE</div>
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+              <label>Operator</label>
+              <select class="form-control" [(ngModel)]="metric.operator" [disabled]="!metric.enabled">
+                <option value="<">&lt;</option>
+                <option value=">">&gt;</option>
+                <option value="=">=</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label>Value ({{ metricUnit }})</label>
+              <input 
+                class="form-control" 
+                [(ngModel)]="metric.value" 
+                placeholder="20ms" 
+                [disabled]="!metric.enabled" />
+            </div>
+
+            <div class="col-md-4 d-flex flex-column align-items-center">
+              <label class="me-2">Enable/Disable</label>
+              <label class="switch">
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="metric.enabled" 
+                  (change)="onToggleMetric(i)" />
+                <span class="slider"></span>
+              </label>
+            </div>
           </div>
-  
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Operator</th>
-                <th>Value (ms)</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let metric of thresholdMetrics">
-                <td>{{ metric.label }}</td>
-                <td><input class="form-control" [(ngModel)]="metric.operator" /></td>
-                <td><input class="form-control" [(ngModel)]="metric.value" /></td>
-                <td>
-                  <button class="btn btn-sm" [ngClass]="metric.enabled ? 'btn-success' : 'btn-secondary'" (click)="metric.enabled = !metric.enabled">
-                    {{ metric.enabled ? 'Active' : 'Inactive' }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-  
-          <div class="text-end mt-3">
-            <button class="btn btn-secondary me-2" (click)="showPopup = false">Cancel</button>
-            <button class="btn btn-primary" (click)="createThreshold()">Create Threshold</button>
-          </div>
+        </div>
+
+        <div class="text-end mt-4">
+          <button class="btn btn-secondary me-2" (click)="showPopup = false">Cancel</button>
+          <button class="btn btn-primary" (click)="createThreshold()">Create Threshold</button>
         </div>
       </div>
     </div>
   </div>
-  
+</div>

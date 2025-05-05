@@ -10,7 +10,6 @@ export interface Agent {
   port: number; 
   testHealth: boolean;
   availability: number;
-
 }
 
 @Injectable({
@@ -35,5 +34,5 @@ export class AgentService {
   deleteAgent(id: number): Observable<any> {
     return this.http.delete(`${this.ApiUrl}/${id}`);
   }
-  
+    
 }

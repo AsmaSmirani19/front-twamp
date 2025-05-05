@@ -26,7 +26,7 @@
         <!-- ✅ Colonne Control en premier -->
         <td>
           <span class="control-icon" (click)="toggleControl(row)">
-            <i class="fa" [ngClass]="row.isPaused ? 'fa-play' : 'fa-pause'"></i>
+            <i class="fa" [ngClass]="row.isPaused ? 'fa-pause' : 'fa-play'"></i>
           </span>
         </td>
 
@@ -111,63 +111,116 @@
         </div>
       </div>
 
-      <!-- Step 2 -->
-      <div *ngIf="wizardStep === 2" class="wizard-step">
-        <div class="mb-3">
-          <label class="form-label">Source is :</label>
-          <div class="btn-group">
-            <button class="btn"
-                    [ngClass]="{ 'btn-primary': sourceType === 'group', 'btn-outline-primary': sourceType !== 'group' }"
-                    (click)="sourceType = 'group'">
-              Agent Group
-            </button>
-            <button class="btn"
-                    [ngClass]="{ 'btn-primary': sourceType === 'single', 'btn-outline-primary': sourceType !== 'single' }"
-                    (click)="sourceType = 'single'">
-              Single Agent
-            </button>
-          </div>
-        </div>
-        <div class="mb-3">
-          <label *ngIf="sourceType === 'group'" class="form-label">Select Group Agent</label>
-          <label *ngIf="sourceType === 'single'" class="form-label">Select Agent</label>
-          <select class="form-control">
-            <option *ngFor="let agent of agentOptions" [value]="agent">{{ agent }}</option>
-          </select>
-        </div>
-      </div>
+<!-- Step 2 -->
+<div *ngIf="wizardStep === 2" class="wizard-step">
 
-      <!-- Step 3 -->
-      <div *ngIf="wizardStep === 3" class="wizard-step">
-        <div class="mb-3">
-          <label class="form-label">Select Target</label>
-          <select class="form-control">
-            <option *ngFor="let target of targetOptions" [value]="target">{{ target }}</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">QoS Profile</label>
-          <select class="form-control">
-            <option *ngFor="let profile of qosProfiles" [value]="profile">{{ profile }}</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Threshold</label>
-          <input type="text" class="form-control" placeholder="Enter threshold value (e.g. 150ms)" />
-        </div>
-      </div>
-
-      <!-- Wizard Footer -->
-      <div class="wizard-footer d-flex justify-content-between mt-4">
-        <button class="btn btn-secondary" [disabled]="wizardStep === 1" (click)="prevStep()">Previous</button>
-        <button class="btn btn-primary"
-                *ngIf="wizardStep < 3"
-                (click)="nextStep()">Next</button>
-        <button class="btn btn-success"
-                *ngIf="wizardStep === 3"
-                (click)="finishWizard()">Finish</button>
-      </div>
-
+  <!-- Source Type Selection -->
+  <div class="mb-3">
+    <label class="form-label">Source is :</label>
+    <div class="btn-group">
+      <button class="btn"
+        [ngClass]="{ 'btn-primary': sourceType === 'group', 'btn-outline-primary': sourceType !== 'group' }"
+        (click)="sourceType = 'group'">
+        Agent Group
+      </button>
+      <button class="btn"
+        [ngClass]="{ 'btn-primary': sourceType === 'single', 'btn-outline-primary': sourceType !== 'single' }"
+        (click)="sourceType = 'single'">
+        Single Agent
+      </button>
     </div>
   </div>
+
+  <!-- Source and Target Selection -->
+  <div class="mb-3">
+
+    <!-- When Group selected -->
+    <div *ngIf="sourceType === 'group'">
+      <!-- Select Source Group -->
+      <div class="form-group mb-2">
+        <label for="agentGroupSelect" class="form-label">Select Agent Group</label>
+        <select id="agentGroupSelect" [(ngModel)]="selectedAgentGroupId" name="agentGroupSelect" class="form-control">
+          <option [value]="null" disabled>-- Select a group --</option>
+          <option *ngFor="let group of agentGroups" [value]="group.id">{{ group.group_name }}</option>
+        </select>
+      </div>
+
+      <!-- Select Target Group (same list) -->
+      <div class="form-group">
+        <label for="targetGroupSelect" class="form-label">Select Target Group</label>
+        <select id="targetGroupSelect" [(ngModel)]="selectedTargetGroupId" name="targetGroupSelect" class="form-control">
+          <option [value]="null" disabled>-- Select a target group --</option>
+          <option *ngFor="let group of agentGroups" [value]="group.id">{{ group.group_name }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- When Single Agent selected -->
+    <div *ngIf="sourceType === 'single'">
+      <!-- Select Source Agent -->
+      <div class="form-group mb-2">
+        <label for="agentSelect" class="form-label">Select Agent</label>
+        <select id="agentSelect" [(ngModel)]="selectedAgentId" name="agentSelect" class="form-control">
+          <option [value]="null" disabled>-- Select an agent --</option>
+          <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
+        </select>
+      </div>
+
+      <!-- Select Target Agent (same list) -->
+      <div class="form-group">
+        <label for="targetAgentSelect" class="form-label">Select Target Agent</label>
+        <select id="targetAgentSelect" [(ngModel)]="selectedTargetAgentId" name="targetAgentSelect" class="form-control">
+          <option [value]="null" disabled>-- Select a target agent --</option>
+          <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
 </div>
+
+
+<!-- Step 3 -->
+<div *ngIf="wizardStep === 3" class="wizard-step">
+  
+  <div class="mb-3">
+    <label class="form-label">QoS Profile</label>
+    <select class="form-control" [(ngModel)]="selectedTestProfileId">
+      <option [value]="null" disabled>-- Select a QoS Profile --</option>
+      <option *ngFor="let profile of qosProfiles" [value]="profile.id">{{ profile.profile_name }}</option>
+    </select>
+  </div>
+
+  <!-- Selection of Threshold from the list of created thresholds -->
+  <div class="mb-3">
+    <label class="form-label">Threshold</label>
+    <select class="form-control" [(ngModel)]="selectedThreshold" name="thresholdSelect" (change)="updateParameterBasedOnThreshold()">
+      <option [value]="null" disabled>-- Select a threshold --</option>
+      <option *ngFor="let threshold of thresholds" [value]="threshold.profileName">
+        {{ threshold.profileName }} (Active: {{ threshold.activeThreshold }}, Disabled: {{ threshold.disabledThreshold }})
+      </option>
+      
+    </select>
+  </div>
+  
+  <!-- Display the updated parameter based on selected Threshold -->
+  <div *ngIf="selectedParameter">
+    <p>Updated Parameter: {{ selectedParameter }}</p>
+  </div>
+  
+</div>
+
+<!-- Wizard Footer -->
+<div class="wizard-footer d-flex justify-content-between mt-4">
+  <button class="btn btn-secondary" [disabled]="wizardStep === 1" (click)="prevStep()">Previous</button>
+  <button class="btn btn-primary"
+          *ngIf="wizardStep < 3"
+          (click)="nextStep()">Next</button>
+  <button class="btn btn-success"
+          *ngIf="wizardStep === 3"
+          (click)="finishWizard()">Finish</button>
+</div>
+
+
+

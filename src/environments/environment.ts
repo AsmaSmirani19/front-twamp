@@ -7,5 +7,7 @@ export const environment = {
   production: false,
   ApiUrl: 'http://localhost:5000/api/agents',
   plannedTestsApiUrl: 'http://localhost:5000/api/planned-tests',
-  GroupsApiUrl: 'http://localhost:5000/api/agent-group'
+  GroupsApiUrl: 'http://localhost:5000/api/agent-group',
+  testProfileApiUrl: 'http://localhost:5000/api/test-profile',
+  thresholdApiUrl: 'http://localhost:5000/api/threshold'
 };
