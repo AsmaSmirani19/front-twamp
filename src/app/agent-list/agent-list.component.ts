@@ -12,22 +12,22 @@ export class AgentListComponent implements OnInit {
     'Address',
     'Test Health',
     'Availability (Test)',
-    'Action'
   ];
 
-  public agents: Agent[] = [];
+  public agents: Agent[] = []; 
   public searchTerm: string = '';
   public newAgentPopupVisible = false;
   public newAgent: Agent = this.getEmptyAgent();
 
   constructor(private agentService: AgentService) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadAgents();
   }
 
   private getEmptyAgent(): Agent {
     return {
+      id: undefined,
       name: '',
       address: '',
       port: 8080,
@@ -37,23 +37,21 @@ export class AgentListComponent implements OnInit {
   }
 
   loadAgents(): void {
-    this.agentService.getAgents().subscribe((data) => {
-      this.agents = data;
-      this.reorganizeIds();  // Réorganiser les IDs après chaque chargement
-    });
-  }
-
-  reorganizeIds(): void {
-    // Réorganiser les IDs des agents pour les rendre consécutifs
-    this.agents = this.agents.map((agent, index) => {
-      agent.id = index + 1; // Réinitialiser l'ID en fonction de l'index
-      return agent;
+    this.agentService.getAgents().subscribe({
+      next: (data) => {
+        console.log('Agents chargés depuis l’API :', data);
+        this.agents = data ?? []; // ✅ fallback vide si null
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des agents :', err);
+        this.agents = []; // ✅ évite une erreur dans le getter
+      }
     });
   }
 
   get filteredAgents(): Agent[] {
     const lowerTerm = this.searchTerm?.toLowerCase() || '';
-    return this.agents.filter(agent =>
+    return (this.agents ?? []).filter(agent =>
       agent.name.toLowerCase().includes(lowerTerm) ||
       agent.address.toLowerCase().includes(lowerTerm)
     );
@@ -66,24 +64,30 @@ export class AgentListComponent implements OnInit {
 
   createAgent(): void {
     if (this.newAgent.name && this.newAgent.address) {
-      this.agentService.createAgent(this.newAgent).subscribe(() => {
-        this.loadAgents();
-        this.newAgent = this.getEmptyAgent();
-        this.newAgentPopupVisible = false;
+      this.agentService.createAgent(this.newAgent).subscribe({
+        next: () => {
+          this.loadAgents(); // Recharge la liste
+          this.newAgent = this.getEmptyAgent();
+          this.newAgentPopupVisible = false;
+        },
+        error: (err) => {
+          console.error('Erreur lors de la création de l’agent :', err);
+        }
       });
     } else {
       alert('Veuillez remplir tous les champs.');
     }
   }
 
-  deleteAgent(index: number): void {
-    const agentToDelete = this.agents[index];
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet agent ?')) {
-      this.agentService.deleteAgent(agentToDelete.id).subscribe(() => {
-        // Supprimer l'agent de la liste localement
-        this.agents.splice(index, 1);
-        this.reorganizeIds();  // Réajuster les IDs après la suppression
-      });
-    }
-  }
+  deleteAgent(id: number): void {
+    console.log('Tentative suppression ID :', id); 
+    this.agentService.deleteAgent(id).subscribe({
+      next: () => {
+        this.agents = this.agents.filter(agent => agent.id !== id);
+      },
+      error: (err) => {
+        console.error('Erreur suppression :', err);
+      }
+    });
+  }  
 }

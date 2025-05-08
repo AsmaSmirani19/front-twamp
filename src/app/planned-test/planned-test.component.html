@@ -160,24 +160,22 @@
       <!-- Select Source Agent -->
       <div class="form-group mb-2">
         <label for="agentSelect" class="form-label">Select Agent</label>
-        <select id="agentSelect" [(ngModel)]="selectedAgentId" name="agentSelect" class="form-control">
-          <option [value]="null" disabled>-- Select an agent --</option>
-          <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
+        <select id="agentSelect" [(ngModel)]="selectedAgentId" name="agentSelect" class="form-control" required>
+          <option [ngValue]="null" disabled selected>-- Select an agent --</option>
+          <option *ngFor="let agent of agents" [ngValue]="agent.id">{{ agent.name }}</option>
         </select>
       </div>
-
-      <!-- Select Target Agent (same list) -->
+    
+      <!-- Select Target Agent -->
       <div class="form-group">
         <label for="targetAgentSelect" class="form-label">Select Target Agent</label>
-        <select id="targetAgentSelect" [(ngModel)]="selectedTargetAgentId" name="targetAgentSelect" class="form-control">
-          <option [value]="null" disabled>-- Select a target agent --</option>
-          <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
+        <select id="targetAgentSelect" [(ngModel)]="selectedTargetAgentId" name="targetAgentSelect" class="form-control" required>
+          <option [ngValue]="null" disabled selected>-- Select a target agent --</option>
+          <option *ngFor="let agent of agents" [ngValue]="agent.id">{{ agent.name }}</option>
         </select>
       </div>
-    </div>
-
+    </div>    
   </div>
-
 </div>
 
 
@@ -195,13 +193,12 @@
   <!-- Selection of Threshold from the list of created thresholds -->
   <div class="mb-3">
     <label class="form-label">Threshold</label>
-    <select class="form-control" [(ngModel)]="selectedThreshold" name="thresholdSelect" (change)="updateParameterBasedOnThreshold()">
-      <option [value]="null" disabled>-- Select a threshold --</option>
-      <option *ngFor="let threshold of thresholds" [value]="threshold.profileName">
-        {{ threshold.profileName }} (Active: {{ threshold.activeThreshold }}, Disabled: {{ threshold.disabledThreshold }})
-      </option>
-      
-    </select>
+    <select [(ngModel)]="selectedThreshold">
+  <option *ngFor="let threshold of thresholds" [value]="threshold.name">
+    {{ threshold.name }}
+  </option>
+</select>
+
   </div>
   
   <!-- Display the updated parameter based on selected Threshold -->

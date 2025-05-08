@@ -18,6 +18,8 @@ export interface Threshold {
   min_opr: string;
   max_opr: string;
 
+  selected_metric: string; 
+
   // Listes utilisées pour l'affichage (pas  utiles côté backend)
   active_threshold?: string[];
   disabled_threshold?: string[];

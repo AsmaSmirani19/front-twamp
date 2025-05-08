@@ -80,6 +80,7 @@
             },
             "development": {
               "browserTarget": "lbd-free-angular-cli:build:development"
+              
             },
             "defaultConfiguration": "development"
           }

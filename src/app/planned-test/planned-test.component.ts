@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { PlannedTestService } from './planned-test.service';
 import { AgentGroupService, AgentGroup } from '../agent-group/agent-group.service';
-import { AgentService } from '../agent-list/agent.service'; 
-import { TestProfile } from '../test-profile/test-profile.model'; 
-import { TestProfileService } from '../test-profile/test-profile.service'; 
+import { AgentService } from '../agent-list/agent.service';
+import { TestProfile } from '../test-profile/test-profile.model';
+import { TestProfileService } from '../test-profile/test-profile.service';
 import { ThresholdService } from '../threshold/threshold.service';
-
+import { TestService } from '../services/test.services';
 
 export interface PlannedTest {
   name: string;
@@ -13,7 +12,7 @@ export interface PlannedTest {
   numberOfAgents: number;
   createdAt: string;
   isPaused: boolean;
-  agentGroupId?: string; 
+  agentGroupId?: string;
   agentId?: string;
   testProfileId?: number;
   thresholdName?: string;
@@ -42,12 +41,12 @@ export class PlannedTestComponent implements OnInit {
 
   qosProfiles: TestProfile[] = [];
   agentGroups: AgentGroup[] = [];
-  agentOptions: string[] = [];
   agents: any[] = [];
-  thresholds: any[] = []; 
+  thresholds: any[] = [];
+  agentOptions: string[] = [];
 
   constructor(
-    private plannedTestService: PlannedTestService,
+    private testService: TestService,
     private agentGroupService: AgentGroupService,
     private agentService: AgentService,
     private testProfileService: TestProfileService,
@@ -60,11 +59,10 @@ export class PlannedTestComponent implements OnInit {
     this.loadAgents();
     this.loadTestProfiles();
     this.loadThresholds();
-    
   }
 
   refreshPlannedTests(): void {
-    this.plannedTestService.getPlannedTests().subscribe({
+    this.testService.getTests().subscribe({
       next: (testsFromAPI: any[]) => {
         if (Array.isArray(testsFromAPI)) {
           this.tableData.dataRows = testsFromAPI.map(test => ({
@@ -72,7 +70,11 @@ export class PlannedTestComponent implements OnInit {
             duration: test.test_duration,
             numberOfAgents: test.number_of_agents,
             createdAt: test.creation_date,
-            isPaused: false
+            isPaused: false,
+            agentGroupId: test.agent_group_id,
+            agentId: test.agent_id,
+            testProfileId: test.test_profile_id,
+            thresholdName: test.threshold_name
           }));
         } else {
           console.error('Données invalides reçues');
@@ -87,7 +89,6 @@ export class PlannedTestComponent implements OnInit {
   loadAgentGroups(): void {
     this.agentGroupService.getAgentGroups().subscribe({
       next: (groups: AgentGroup[]) => {
-        console.log('Groupes d\'agents récupérés:', groups);
         this.agentGroups = groups;
         this.updateAgentOptions();
       },
@@ -97,11 +98,9 @@ export class PlannedTestComponent implements OnInit {
     });
   }
 
-
   loadAgents(): void {
     this.agentService.getAgents().subscribe({
       next: (agents) => {
-        console.log('Agents récupérés:', agents);
         this.agents = agents;
       },
       error: (err) => {
@@ -114,7 +113,6 @@ export class PlannedTestComponent implements OnInit {
     this.testProfileService.getTestProfiles().subscribe({
       next: (profiles: TestProfile[]) => {
         this.qosProfiles = profiles;
-        console.log('QoS Profiles loaded:', profiles);
       },
       error: (error) => {
         console.error('Erreur lors du chargement des profils QoS :', error);
@@ -126,20 +124,15 @@ export class PlannedTestComponent implements OnInit {
     this.thresholdService.getThresholds().subscribe({
       next: (thresholds: any[]) => {
         this.thresholds = thresholds;
-        console.log('Thresholds loaded:', thresholds); 
       },
       error: (error) => {
         console.error('Erreur lors du chargement des thresholds :', error);
       }
     });
   }
-  
 
   updateAgentOptions(): void {
-    if (Array.isArray(this.agentGroups)) {
-      this.agentOptions = this.agentGroups.map(group => group.group_name);
-      console.log('Options d\'agents mises à jour:', this.agentOptions);
-    }
+    this.agentOptions = this.agentGroups.map(group => group.group_name);
   }
 
   onNewPlannedTest(): void {
@@ -153,7 +146,7 @@ export class PlannedTestComponent implements OnInit {
     this.selectedAgentGroupId = null;
     this.selectedAgentId = null;
     this.selectedTestProfileId = null;
-    this.selectedThreshold = null; 
+    this.selectedThreshold = null;
   }
 
   nextStep(): void {
@@ -170,43 +163,99 @@ export class PlannedTestComponent implements OnInit {
   }
 
   createAndAddTest(): void {
-    if (!this.testPlan.name.trim() || !this.testPlan.duration.trim()) {
-      console.error('Le nom et la durée du test sont obligatoires.');
+    const name = this.testPlan.name.trim();
+    const durationStr = this.testPlan.duration.trim();
+  
+    if (!name || !durationStr) {
+      console.error('❌ Le nom et la durée du test sont obligatoires.');
       return;
     }
-
-    const durationNumber = parseInt(this.testPlan.duration.trim(), 10);
+    const durationNumber = parseInt(durationStr, 10);
     if (isNaN(durationNumber) || durationNumber <= 0) {
-      console.error('La durée doit être un nombre valide et supérieur à zéro.');
+      console.error('❌ La durée doit être un nombre valide supérieur à 0.');
       return;
     }
-
+    let numberOfAgents = 1;
+    let agentIdNumber: number | null = null;
+    let agentGroupId: string | null = null;
+    if (this.selectedAgentGroupId) {
+      agentGroupId = this.selectedAgentGroupId;
+  
+      // ✅ Compter les agents appartenant au groupe
+      const agentsInGroup = this.agents.filter(agent => agent.group_id === agentGroupId);
+      numberOfAgents = agentsInGroup.length;
+  
+      if (numberOfAgents === 0) {
+        console.error('❌ Aucun agent trouvé dans le groupe sélectionné.');
+        return;
+      }
+  
+      // Pour l'exemple, on peut prendre le premier agent comme source et cible
+      agentIdNumber = agentsInGroup[0]?.id;
+    } else if (this.selectedAgentId) {
+      agentIdNumber = Number(this.selectedAgentId);
+      numberOfAgents = 1;
+    }
+  
+    if (!agentIdNumber || agentIdNumber <= 0) {
+      console.error('❌ Agent ID manquant ou invalide.');
+      return;
+    }
+  
+    const profileId = this.selectedTestProfileId ? Number(this.selectedTestProfileId) : null;
+    if (!profileId) {
+      console.error('❌ Profil de test non sélectionné.');
+      return;
+    }
+    const selectedThreshold = this.thresholds.find(t => t.name === this.selectedThreshold);
+    const thresholdId = selectedThreshold ? selectedThreshold.id : 0;
     const newTest = {
-      test_name: this.testPlan.name.trim(),
-      test_duration: this.testPlan.duration.trim() + 's',
-      number_of_agents: 0,
+      test_name: name,
+      test_duration: `${durationNumber}s`,
+      number_of_agents: numberOfAgents,
       creation_date: new Date().toISOString(),
-      agent_group_id: this.selectedAgentGroupId,
-      agent_id: this.selectedAgentId,
-      test_profile_id: this.selectedTestProfileId,
-      threshold_name: this.selectedThreshold
+      agent_group_id: agentGroupId,
+      agent_id: agentIdNumber,
+      test_profile_id: profileId,
+      threshold_name: this.selectedThreshold,
+      threshold_id: thresholdId,
+      waiting: true,
+      failed: false,
+      completed: false,
+      test_type: 'planned_test',
+      source_id: agentIdNumber,
+      target_id: agentIdNumber,
+      profile_id: profileId,
+      result_path: '/results/path',
+      test_status: 'planned',
+      is_periodic: false,
+      interval: 0
     };
-
-    this.plannedTestService.createPlannedTest(newTest as any).subscribe({
+  
+    console.log('✅ Payload envoyé au backend :', newTest);
+  
+    this.testService.createTest(newTest).subscribe({
       next: () => {
-        console.log('Test créé avec succès');
+        console.log('✅ Test créé avec succès.');
         this.refreshPlannedTests();
         this.cancelWizard();
       },
       error: (err) => {
-        console.error('Erreur lors de l\'enregistrement du test :', err);
+        console.error('❌ Erreur lors de la création du test :', err);
       }
     });
   }
+  
+
 
   submitWizard(): void {
+    if (!this.selectedAgentId) {
+      console.error('Veuillez sélectionner un agent avant de soumettre.');
+      return;
+    }
     this.createAndAddTest();
   }
+  
 
   finishWizard(): void {
     this.createAndAddTest();

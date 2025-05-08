@@ -1,35 +1,39 @@
 <div class="main-content">
   <div class="container-fluid">
+    <!-- Bouton pour afficher le popup -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <button class="btn btn-sm btn-primary" (click)="showPopup = true">New Threshold</button>
     </div>
 
+    <!-- Table des thresholds -->
     <div class="card">
-      <div class="content table-responsive">
-        <table class="table table-hover">
+      <div class="card-body table-responsive">
+        <table class="table table-hover" *ngIf="thresholds && thresholds.length > 0">
           <thead>
             <tr>
               <th>Profile Name</th>
               <th>Creation Date</th>
               <th>Active Threshold</th>
               <th>Disabled Threshold</th>
+              <th>Metric</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let threshold of thresholds">
-              <td>{{ threshold.profileName }}</td>
-              <td>{{ threshold.creationDate }}</td>
+              <td>{{ threshold.name }}</td>
+              <td>{{ threshold.creation_date | date:'short' }}</td>
               <td>
-                <ul>
-                  <li *ngFor="let item of threshold.activeThreshold.split(', ')">{{ item }}</li>
+                <ul *ngIf="threshold.active_thresholds?.length">
+                  <li *ngFor="let item of threshold.active_thresholds">{{ item }}</li>
                 </ul>
               </td>
               <td>
-                <ul>
-                  <li *ngFor="let item of threshold.disabledThreshold.split(', ')">{{ item }}</li>
+                <ul *ngIf="threshold.disabled_thresholds?.length">
+                  <li *ngFor="let item of threshold.disabled_thresholds">{{ item }}</li>
                 </ul>
               </td>
+              <td>{{ threshold.selected_metric }}</td>
               <td>
                 <i class="fa fa-eye text-info me-2" (click)="onView(threshold)" style="cursor:pointer;"></i>
                 <i class="fa fa-trash text-danger" (click)="onDelete(threshold)" style="cursor:pointer;"></i>
@@ -37,34 +41,26 @@
             </tr>
           </tbody>
         </table>
+        <div *ngIf="!thresholds || thresholds.length === 0" class="text-center text-muted">No thresholds found.</div>
       </div>
     </div>
 
-    <!-- Bloc par popup -->
-    <div class="popup-backdrop" *ngIf="showPopup">
-      <div class="popup-card">
-        <div class="popup-header d-flex justify-content-between align-items-center mb-3">
+    <!-- Popup Bloc -->
+    <div *ngIf="showPopup" class="popup-backdrop">
+      <div class="popup-card bg-white p-4 shadow rounded">
+        <div class="d-flex justify-content-between align-items-center mb-3">
           <h5>Create New Threshold</h5>
-          <button class="close-btn btn btn-sm" (click)="showPopup = false">×</button>
+          <button class="btn-close" (click)="showPopup = false"></button>
         </div>
 
         <div class="mb-3">
-          <label for="thresholdName">Threshold Name</label>
-          <input 
-            class="form-control" 
-            [(ngModel)]="newThreshold.name" 
-            id="thresholdName" 
-            placeholder="Threshold Demo"
-            required />
+          <label for="thresholdName" class="form-label">Threshold Name</label>
+          <input type="text" id="thresholdName" class="form-control" [(ngModel)]="newThreshold.name" placeholder="Threshold Demo">
         </div>
 
         <div class="mb-3">
-          <label for="metricSelect">Select Metric</label>
-          <select 
-            class="form-control" 
-            [(ngModel)]="newThreshold.selectedMetric" 
-            id="metricSelect" 
-            (change)="onMetricChange()">
+          <label for="metricSelect" class="form-label">Select Metric</label>
+          <select id="metricSelect" class="form-control" [(ngModel)]="newThreshold.selectedMetric" (change)="onMetricChange()">
             <option value="latency">Latency</option>
             <option value="jitter">Jitter</option>
             <option value="bandwidth">Bandwidth</option>
@@ -72,12 +68,12 @@
           </select>
         </div>
 
-        <!-- Bloc par métrique -->
-        <div class="threshold-section" *ngFor="let metric of thresholdMetrics; let i = index">
-          <div class="section-label fw-bold mb-2">{{ metric.label.toUpperCase() }} VALUE</div>
-          <div class="row g-2 align-items-end">
+        <!-- Sections de seuil -->
+        <div *ngFor="let metric of thresholdMetrics; let i = index" class="mb-3">
+          <div class="fw-bold mb-2">{{ metric.label.toUpperCase() }} VALUE</div>
+          <div class="row g-3 align-items-end">
             <div class="col-md-4">
-              <label>Operator</label>
+              <label class="form-label">Operator</label>
               <select class="form-control" [(ngModel)]="metric.operator" [disabled]="!metric.enabled">
                 <option value="<">&lt;</option>
                 <option value=">">&gt;</option>
@@ -86,23 +82,13 @@
             </div>
 
             <div class="col-md-4">
-              <label>Value ({{ metricUnit }})</label>
-              <input 
-                class="form-control" 
-                [(ngModel)]="metric.value" 
-                placeholder="20ms" 
-                [disabled]="!metric.enabled" />
+              <label class="form-label">Value ({{ metricUnit }})</label>
+              <input type="text" class="form-control" [(ngModel)]="metric.value" [disabled]="!metric.enabled">
             </div>
 
-            <div class="col-md-4 d-flex flex-column align-items-center">
-              <label class="me-2">Enable/Disable</label>
-              <label class="switch">
-                <input 
-                  type="checkbox" 
-                  [(ngModel)]="metric.enabled" 
-                  (change)="onToggleMetric(i)" />
-                <span class="slider"></span>
-              </label>
+            <div class="col-md-4">
+              <label class="form-label">Enable</label>
+              <input type="checkbox" class="form-check-input" [(ngModel)]="metric.enabled" (change)="onToggleMetric(i)">
             </div>
           </div>
         </div>

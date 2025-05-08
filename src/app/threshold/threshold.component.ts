@@ -11,8 +11,9 @@ import { of } from 'rxjs';
 export class ThresholdComponent implements OnInit {
   thresholds: any[] = [];
   showPopup = false;
+  selectedProfile: any = null;
 
-  // Formulaire de création de seuil
+  // Formulaire de création
   newThreshold = {
     name: '',
     selectedMetric: 'latency'
@@ -22,9 +23,8 @@ export class ThresholdComponent implements OnInit {
   activeData: any[] = [];
   disabledData: any[] = [];
 
-  metricUnit = 'ms'; // Unité par défaut
+  metricUnit = 'ms';
 
-  // Liste des métriques configurables
   thresholdMetrics = [
     { label: 'Min Value', operator: '', value: '', enabled: true },
     { label: 'Max Value', operator: '', value: '', enabled: true },
@@ -37,54 +37,50 @@ export class ThresholdComponent implements OnInit {
   constructor(private thresholdService: ThresholdService) {}
 
   ngOnInit(): void {
-    this.loadThresholds();
-
-    this.thresholdService.getThresholds().subscribe({
-      next: (response) => {
-        this.data = response.data;
-
-        this.activeData = this.data.filter(item =>
-          item.avg_status === 1 || item.min_status === 1 || item.max_status === 1
-        );
-
-        this.disabledData = this.data.filter(item =>
-          item.avg_status === 0 && item.min_status === 0 && item.max_status === 0
-        );
-      },
-      error: (err) => {
-        console.error('Erreur lors de la récupération des données', err);
-      }
-    });
+    this.loadAndProcessThresholds();
   }
 
-  loadThresholds(): void {
-    this.thresholdService.getThresholds().subscribe({
-      next: (data) => {
-        this.thresholds = data;
+  loadAndProcessThresholds(): void {
+    this.thresholdService.getThresholds().pipe(
+      catchError(err => {
+        console.error('Erreur lors de getThresholds()', err);
+        return of([]);
+      })
+    ).subscribe(data => {
+      this.thresholds = data;
+
+      if (data.length > 0) {
         const threshold = data[0];
-        this.activeThresholds = threshold.active_threshold?.split(', ') || [];
-        this.disabledThresholds = threshold.disabled_threshold?.split(', ') || [];
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des thresholds', err);
+
+        this.activeThresholds = Array.isArray(threshold.active_thresholds)
+          ? threshold.active_thresholds
+          : threshold.active_thresholds?.split(',') || [];
+
+        this.disabledThresholds = Array.isArray(threshold.disabled_thresholds)
+          ? threshold.disabled_thresholds
+          : threshold.disabled_thresholds?.split(',') || [];
       }
+
+      this.data = data;
+      this.activeData = data.filter(item =>
+        item.avg_status === 1 || item.min_status === 1 || item.max_status === 1
+      );
+      this.disabledData = data.filter(item =>
+        item.avg_status === 0 && item.min_status === 0 && item.max_status === 0
+      );
     });
   }
 
   onView(profile: any): void {
-    console.log('View threshold:', profile);
+    this.selectedProfile = profile;
     this.showPopup = true;
   }
 
   onDelete(profile: any): void {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce threshold ?')) {
       this.thresholdService.deleteThreshold(profile.id).subscribe({
-        next: () => {
-          this.loadThresholds();
-        },
-        error: (err) => {
-          console.error('Erreur lors de la suppression du threshold', err);
-        }
+        next: () => this.loadAndProcessThresholds(),
+        error: (err) => console.error('Erreur lors de la suppression du threshold', err)
       });
     }
   }
@@ -106,7 +102,6 @@ export class ThresholdComponent implements OnInit {
     }
   }
 
-  // Fonction de parsing sécurisée
   private parseNumber(value: any): number {
     const num = parseFloat(value);
     return isNaN(num) ? 0 : num;
@@ -117,66 +112,59 @@ export class ThresholdComponent implements OnInit {
       console.error("Le nom du profil est requis.");
       return;
     }
-  
-    // Trouver les métriques activées
+
     const avgMetric = this.thresholdMetrics.find(m => m.label === 'Avg Value');
     const minMetric = this.thresholdMetrics.find(m => m.label === 'Min Value');
     const maxMetric = this.thresholdMetrics.find(m => m.label === 'Max Value');
-  
-    // Créer l'objet de données à envoyer
+
     const thresholdData: any = {
       name: this.newThreshold.name,
       creation_date: new Date().toISOString(),
-      avg: null, // Par défaut, envoyer null si désactivé
-      min: null, // Par défaut, envoyer null si désactivé
-      max: null, // Par défaut, envoyer null si désactivé
-      avg_opr: '', // Valeur vide par défaut pour l'opérateur
-      min_opr: '', // Valeur vide par défaut pour l'opérateur
-      max_opr: '', // Valeur vide par défaut pour l'opérateur
-      avg_status: false, // Par défaut désactivé
-      min_status: false, // Par défaut désactivé
-      max_status: false, // Par défaut désactivé
-      active_threshold: [],
-      disabled_threshold: []
+      avg: 0,
+      min: 0,
+      max: 0,
+      avg_opr: '',
+      min_opr: '',
+      max_opr: '',
+      avg_status: false,
+      min_status: false,
+      max_status: false,
+      active_threshold: this.activeThresholds,
+      disabled_threshold: this.disabledThresholds,
+      selected_metric: this.newThreshold.selectedMetric
     };
-  
-    // Remplir avec les valeurs des métriques activées
+
     if (avgMetric?.enabled) {
-      thresholdData.avg = Number(avgMetric.value) || null;
+      thresholdData.avg = this.parseNumber(avgMetric.value);
       thresholdData.avg_opr = avgMetric.operator || '';
       thresholdData.avg_status = !!(avgMetric.operator && avgMetric.value);
     }
-  
+
     if (minMetric?.enabled) {
-      thresholdData.min = Number(minMetric.value) || null;
+      thresholdData.min = this.parseNumber(minMetric.value);
       thresholdData.min_opr = minMetric.operator || '';
       thresholdData.min_status = !!(minMetric.operator && minMetric.value);
     }
-  
+
     if (maxMetric?.enabled) {
-      thresholdData.max = Number(maxMetric.value) || null;
+      thresholdData.max = this.parseNumber(maxMetric.value);
       thresholdData.max_opr = maxMetric.operator || '';
       thresholdData.max_status = !!(maxMetric.operator && maxMetric.value);
     }
-  
+
     console.log('Données envoyées:', thresholdData);
-  
-    // Appeler le service pour créer le threshold
+
     this.thresholdService.createThreshold(thresholdData).subscribe({
       next: () => {
         console.log('Threshold créé avec succès');
-        this.loadThresholds();
+        this.loadAndProcessThresholds();
         this.showPopup = false;
         this.resetForm();
       },
-      error: (err) => {
-        console.error('Erreur lors de la création du threshold', err);
-      }
+      error: (err) => console.error('Erreur lors de la création du threshold', err)
     });
   }
-  
 
-  // Réinitialiser le formulaire après création
   resetForm(): void {
     this.newThreshold = {
       name: '',
