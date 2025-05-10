@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { AgentService } from '../agent-list/agent.service';
 import { TestProfileService } from '../test-profile/test-profile.service';
 import { ThresholdService } from '../threshold/threshold.service';
-
 import { QuickTestService } from './quick-test.service';
 import { TestService, TestDto } from '../services/test.services';
 
@@ -15,6 +14,8 @@ export class QuickTestComponent implements OnInit {
   agents: any[] = [];
   testProfiles: any[] = [];
   thresholds: any[] = [];
+  quickTests: any[] = []; // Ajouté pour le tableau des tests rapides
+  showQuickPopup: boolean = false; // Contrôle de l'affichage de la popup
 
   testForm = {
     name: '',
@@ -25,59 +26,73 @@ export class QuickTestComponent implements OnInit {
     qosProfile: '',
     threshold: 0
   };
+  
 
   constructor(
     private agentService: AgentService,
     private testProfileService: TestProfileService,
     private thresholdService: ThresholdService,
     private quickTestService: QuickTestService,
-    private testService: TestService   // ✅ Injecté ici aussi
+    private testService: TestService
   ) {}
 
   ngOnInit(): void {
     this.loadAgents();
     this.loadTestProfiles();
     this.loadThresholds();
+    this.loadQuickTests(); // Chargement des tests rapides existants
   }
 
   loadAgents(): void {
     this.agentService.getAgents().subscribe({
-      next: (agents: any[]) => {
-        console.log('Agents récupérés :', agents);
-        this.agents = agents;
-      },
-      error: (err) => {
-        console.error('Erreur lors de la récupération des agents :', err);
-      }
+      next: (agents) => this.agents = agents,
+      error: (err) => console.error('Erreur lors de la récupération des agents :', err)
     });
   }
 
   loadTestProfiles(): void {
     this.testProfileService.getTestProfiles().subscribe({
-      next: (profiles) => {
-        this.testProfiles = profiles;
-      },
-      error: (err) => {
-        console.error('Erreur lors de la récupération des profils de test :', err);
-      }
+      next: (profiles) => this.testProfiles = profiles,
+      error: (err) => console.error('Erreur lors de la récupération des profils de test :', err)
     });
   }
 
   loadThresholds(): void {
     this.thresholdService.getThresholds().subscribe({
-      next: (thresholds: any[]) => {
-        this.thresholds = thresholds;
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement des thresholds :', error);
-      }
+      next: (thresholds) => this.thresholds = thresholds,
+      error: (err) => console.error('Erreur lors du chargement des thresholds :', err)
     });
+  }
+
+  loadQuickTests(): void {
+    this.testService.getTests().subscribe({
+      next: (tests) => this.quickTests = tests,
+      error: (err) => console.error('Erreur lors de la récupération des tests rapides :', err)
+    });
+  }
+  
+
+  openQuickTestPopup(): void {
+    this.showQuickPopup = true;
+  }
+
+  closeQuickTestPopup(): void {
+    this.showQuickPopup = false;
+  }
+
+  getAgentName(id: number): string {
+    const agent = this.agents.find(a => a.id === id);
+    return agent ? agent.name : 'Inconnu';
+  }
+
+  formatDuration(duration: string): string {
+    return duration.replace('s', ' sec');
   }
 
   launchQuickTest(): void {
     const payload: TestDto = {
       test_name: this.testForm.name,
-      test_duration: this.testForm.duration.toString() + 's',
+      test_duration: `${this.testForm.duration}s`,
       number_of_agents: this.testForm.nbTests,
       source_id: +this.testForm.agentSource,
       target_id: +this.testForm.agentDestination,
@@ -89,16 +104,18 @@ export class QuickTestComponent implements OnInit {
       failed: false,
       completed: false
     };
-
-    console.log('Payload du quick test :', payload);
-
-    this.quickTestService.launchQuickTest(payload).subscribe({
-      next: () => alert('✅ Test lancé avec succès'),
-      error: (err) => alert('❌ Erreur : ' + err.message),
+  
+    this.testService.createTest(payload).subscribe({
+      next: () => {
+        alert('✅ Test enregistré avec succès dans la base de données');
+        this.closeQuickTestPopup();
+        this.loadQuickTests(); // Mise à jour du tableau
+      },
+      error: (err) => alert('❌ Erreur lors de l’enregistrement : ' + err.message)
     });
   }
+  
 
-  // Exemple d’utilisation de TestService si tu veux l’utiliser ici aussi
   createNormalTest(): void {
     const payload: TestDto = {
       test_name: 'Normal test',
@@ -117,7 +134,7 @@ export class QuickTestComponent implements OnInit {
 
     this.testService.createTest(payload).subscribe({
       next: () => console.log('✅ Test normal enregistré avec succès'),
-      error: (err) => console.error('❌ Erreur lors de la création :', err),
+      error: (err) => console.error('❌ Erreur lors de la création :', err)
     });
   }
 

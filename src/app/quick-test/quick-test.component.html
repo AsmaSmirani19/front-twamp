@@ -1,46 +1,114 @@
-<form (ngSubmit)="launchQuickTest()" #form="ngForm">
-  <!-- Agent Source -->
-  <div class="form-group">
-    <label for="agentSource">Agent Source</label>
-    <select id="agentSource" name="agentSource" class="form-control" [(ngModel)]="testForm.agentSource" required>
-      <option value="" disabled selected>Select Agent Source</option>
-      <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
-    </select>
-  </div>
+<!-- BOUTON pour ouvrir la popup -->
+<button class="btn btn-success" (click)="openQuickTestPopup()">Start Quick Test</button>
 
-  <!-- Agent Destination -->
-  <div class="form-group">
-    <label for="agentDestination">Agent Destination</label>
-    <select id="agentDestination" name="agentDestination" class="form-control" [(ngModel)]="testForm.agentDestination" required>
-      <option value="" disabled selected>Select Agent Destination</option>
-      <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
-    </select>
+<!-- Tableau des Quick Tests -->
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-1">Quick Tests</h5>
+    <p class="text-muted mb-0">List of recently launched quick QoS tests</p>
   </div>
-
-  <!-- Test Duration -->
-  <div class="form-group">
-    <label for="duration">Test Duration (seconds)</label>
-    <input type="number" id="duration" name="duration" class="form-control" [(ngModel)]="testForm.duration" min="1" required>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="thead-light">
+        <tr>
+          <th>CONTROL</th>
+          <th>TEST NAME</th>
+          <th>TEST DURATION</th>
+          <th>CREATION DATE</th>
+          <th>ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let test of quickTests">
+          <td><button class="btn btn-sm btn-dark">▶</button></td>
+          <td>{{ getAgentName(test.agentSource) }} → {{ getAgentName(test.agentDestination) }}</td>
+          <td>{{ formatDuration(test.duration) }}</td>
+          <td>{{ test.startedAt | date: 'short' }}</td>
+          <td>
+            <!-- Icône œil (détails) -->
+            <button class="btn btn-sm btn-outline-secondary me-1" (click)="viewTest(test)">
+              <i class="fa fa-eye"></i>
+            </button>
+            <!-- Icône corbeille (suppression) -->
+            <button class="btn btn-sm btn-outline-danger" (click)="deleteTest(test)">
+              <i class="fa fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
+</div>
 
-  <!-- QoS Profile -->
-  <div class="form-group">
-    <label for="qosProfile">QoS Profile</label>
-    <select id="qosProfile" name="qosProfile" class="form-control" [(ngModel)]="testForm.qosProfile" required>
-      <option value="" disabled selected>Select QoS Profile</option>
-      <option *ngFor="let profile of testProfiles" [value]="profile.id">{{ profile.profile_name }}</option>
-    </select>
+
+<!-- POPUP CENTRÉE -->
+<div *ngIf="showQuickPopup" class="popup-overlay">
+  <div class="popup-content">
+    <div class="popup-header d-flex justify-content-between align-items-center mb-3">
+      <h5>Launch Quick Test</h5>
+      <button class="btn-close" (click)="closeQuickTestPopup()">×</button>
+    </div>
+
+    <form (ngSubmit)="launchQuickTest()" #form="ngForm">
+      
+      <!-- Test Name -->
+      <div class="form-group mb-3">
+        <label for="testName">Test Name</label>
+        <input
+          type="text"
+          id="testName"
+          name="testName"
+          class="form-control"
+          [(ngModel)]="testForm.testName"
+          placeholder="Enter test name"
+          required
+        />
+      </div>
+
+      <!-- Agent Source -->
+      <div class="form-group mb-3">
+        <label for="agentSource">Agent Source</label>
+        <select id="agentSource" name="agentSource" class="form-control" [(ngModel)]="testForm.agentSource" required>
+          <option value="" disabled selected>Select Agent Source</option>
+          <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
+        </select>
+      </div>
+
+      <!-- Agent Destination -->
+      <div class="form-group mb-3">
+        <label for="agentDestination">Agent Destination</label>
+        <select id="agentDestination" name="agentDestination" class="form-control" [(ngModel)]="testForm.agentDestination" required>
+          <option value="" disabled selected>Select Agent Destination</option>
+          <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
+        </select>
+      </div>
+
+      <!-- Test Duration -->
+      <div class="form-group mb-3">
+        <label for="duration">Test Duration (seconds)</label>
+        <input type="number" id="duration" name="duration" class="form-control" [(ngModel)]="testForm.duration" min="1" required>
+      </div>
+
+      <!-- QoS Profile -->
+      <div class="form-group mb-3">
+        <label for="qosProfile">QoS Profile</label>
+        <select id="qosProfile" name="qosProfile" class="form-control" [(ngModel)]="testForm.qosProfile" required>
+          <option value="" disabled selected>Select QoS Profile</option>
+          <option *ngFor="let profile of testProfiles" [value]="profile.id">{{ profile.profile_name }}</option>
+        </select>
+      </div>
+
+      <!-- Threshold -->
+      <div class="form-group mb-3">
+        <label for="threshold">Threshold</label>
+        <select id="threshold" name="threshold" class="form-control" [(ngModel)]="testForm.threshold" required>
+          <option value="" disabled selected>Select Threshold</option>
+          <option *ngFor="let threshold of thresholds" [value]="threshold.id">{{ threshold.name }}</option>
+        </select>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary w-100" [disabled]="form.invalid">Launch Test</button>
+    </form>
   </div>
-
-  <!-- Threshold -->
-  <div class="form-group">
-    <label for="threshold">Threshold</label>
-    <select id="threshold" name="threshold" class="form-control" [(ngModel)]="testForm.threshold" required>
-      <option value="" disabled selected>Select Threshold</option>
-      <option *ngFor="let threshold of thresholds" [value]="threshold.id">{{ threshold.name }}</option>
-    </select>
-  </div>
-
-  <!-- Submit Button -->
-  <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Launch Test</button>
-</form>
+</div>
