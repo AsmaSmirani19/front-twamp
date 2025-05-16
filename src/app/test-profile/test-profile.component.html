@@ -1,17 +1,18 @@
-<div class="card">
-  <!-- Header -->
-  <div class="header d-flex justify-content-between align-items-center">
-    <div>
-      <h4 class="title mb-0">Test Profiles</h4>
-      <p class="category">List of configured QoS profiles</p>
-    </div>
-    <!-- Bouton New Profile en haut -->
-    <button class="btn btn-primary" (click)="openNewProfilePopup()">New Profile</button>
-  </div>
+<div class="main-content"> 
+  <div class="main-content">
+    <div class="container-fluid">
 
-  <!-- Table -->
-  <div class="content table-responsive table-full-width">
-    <table class="table table-hover table-striped">
+ <!-- Bouton -->
+<div class="d-flex justify-content-between align-items-center" style="margin-bottom: 0.7cm;">
+  <button class="custom-add-btn" (click)="openNewProfilePopup()">
+    <span class="me-1">+</span> New Profile
+  </button>
+</div>
+
+<!-- Tableau : marge en haut pour créer l’espace -->
+<div class="card" style="margin-top: 0.7cm;">
+  <div class="card-body table-responsive">
+    <table class="table table-hover" *ngIf="testProfiles && testProfiles.length > 0">
       <thead>
         <tr>
           <th>Profile Name</th>
@@ -22,18 +23,25 @@
       </thead>
       <tbody>
         <tr *ngFor="let profile of testProfiles">
-          <td>{{ profile.profile_name }}</td> <!-- Correction du nom -->
-          <td>{{ profile.creation_date | date }}</td> <!-- Formatage de la date -->
-          <td>{{ profile.packet_size }}</td> <!-- Correction du nom -->
+          <td>{{ profile.profile_name }}</td>
+          <td>{{ profile.creation_date | date:'short' }}</td>
+          <td>{{ profile.packet_size }}</td>
           <td>
-            <i class="fa fa-pencil text-warning me-2" style="cursor: pointer;" (click)="onEdit(profile)" title="Edit"></i>
-            <i class="fa fa-trash text-danger" style="cursor: pointer;" (click)="onDelete(profile)" title="Delete"></i>
+            <i class="fa fa-pencil text-warning me-2" (click)="onEdit(profile)" style="cursor:pointer;"></i>
+            <i class="fa fa-trash text-danger" (click)="onDelete(profile)" style="cursor:pointer;"></i>
           </td>
         </tr>
       </tbody>
     </table>
+    <div *ngIf="!testProfiles || testProfiles.length === 0" class="text-center text-muted">
+      No profiles found.
+    </div>
   </div>
 </div>
+
+
+
+
 
 <!-- Modal Popup for New Profile -->
 <div class="popup-overlay" *ngIf="showNewProfilePopup">

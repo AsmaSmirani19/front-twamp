@@ -1,70 +1,59 @@
 <div class="main-content">
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <div class="header d-flex justify-content-between align-items-center">
-            <div>
-              <h4 class="title mb-1">Agent List</h4>
-              <p class="category">Status overview with Test Health and Availability</p>
-            </div>
-            <button class="btn btn-primary btn-new-agent" (click)="onNewAgent()">
-              <i class="fa fa-plus me-2"></i>New Agent
-            </button>
-          </div>
 
-          <div class="content table-responsive table-full-width">
-            <table class="table table-hover table-modern">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th *ngFor="let header of headerRow">{{ header }}</th>
-                  <!-- Ajout de la colonne "Actions" uniquement ici -->
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let agent of filteredAgents; let i = index">
-                  <td>{{ i + 1 }}</td>
-                  <td class="fw-medium">{{ agent.name }}</td>
-                  <td>{{ agent.address }}</td>
-                  <td>
-                    <i class="fa fa-circle"
-                      [ngClass]="agent.testHealth ? 'text-success' : 'text-danger'"
-                      [title]="agent.testHealth ? 'Healthy' : 'Unhealthy'">
-                    </i>
-                  </td>
-                  <td>
-                    <span class="badge availability-badge"
-                      [ngClass]="{
-                        'bg-success': agent.availability >= 99,
-                        'bg-warning': agent.availability >= 80 && agent.availability < 99,
-                        'bg-danger': agent.availability < 80
-                      }">
-                      {{ agent.availability.toFixed(1) }}%
-                    </span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button class="btn btn-sm btn-icon btn-success me-1" title="Validate">
-                        <i class="fa fa-check"></i>
-                      </button>
-                      <!--button class="btn btn-sm btn-icon btn-warning me-1" title="Edit">
-                        <i class="fa fa-pencil"></i>
-                      </button-->
-                      <button class="btn btn-sm btn-icon btn-danger" title="Delete" (click)="deleteAgent(agent.id)">
-                        <i class="fa fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <!-- Header avec bouton -->
+    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 0.7cm;">
+      <button class="custom-add-btn" (click)="onNewAgent()">
+        <i class="fa fa-plus me-2"></i> New Agent
+      </button>
+    </div>
+
+    <!-- Tableau -->
+    <div class="card-body table-responsive">
+      <table class="table table-hover" *ngIf="filteredAgents && filteredAgents.length > 0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th *ngFor="let header of headerRow">{{ header }}</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let agent of filteredAgents; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td class="fw-medium">{{ agent.name }}</td>
+            <td>{{ agent.address }}</td>
+            <td>
+              <i class="fa fa-circle"
+                [ngClass]="agent.testHealth ? 'text-success' : 'text-danger'"
+                [title]="agent.testHealth ? 'Healthy' : 'Unhealthy'">
+              </i>
+            </td>
+            <td>
+              <span class="tag"
+                [ngClass]="{
+                  'tag-success': agent.availability >= 99,
+                  'tag-warning': agent.availability >= 80 && agent.availability < 99,
+                  'tag-danger': agent.availability < 80
+                }">
+                {{ agent.availability.toFixed(1) }}%
+              </span>
+            </td>
+            <td>
+              <i class="fa fa-check text-success me-2" title="Validate" style="cursor:pointer;"></i>
+              <i class="fa fa-trash text-danger" title="Delete" style="cursor:pointer;" (click)="deleteAgent(agent.id)"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!filteredAgents || filteredAgents.length === 0" class="text-center text-muted">
+        No agents found
       </div>
     </div>
+
   </div>
+</div>
+
 
   <!-- Pop-up de création d'agent -->
   <div class="popup-overlay" *ngIf="newAgentPopupVisible">
@@ -107,9 +96,9 @@
             </div>
           </div>
 
-          <div class="form-footer d-flex justify-content-end mt-4">
+          <div class="popup-footer">
             <button type="button"
-                    class="btn btn-outline-secondary me-3"
+                    class="btn btn-outline-secondary"
                     (click)="newAgentPopupVisible = false">
               Cancel
             </button>
@@ -118,9 +107,9 @@
                     (click)="createAgent()">
               Create Agent
             </button>
-          </div>
+          </div>          
         </form>
       </div>
     </div>
   </div>
-</div>
+

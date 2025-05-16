@@ -165,6 +165,14 @@ export class ThresholdComponent implements OnInit {
     });
   }
 
+  transformThresholdLabel(label: string): string {
+    return label
+      .replace('avg status', 'avg')
+      .replace('max status', 'max')
+      .replace('min status', 'min');
+  }
+  
+
   resetForm(): void {
     this.newThreshold = {
       name: '',
@@ -183,4 +191,6 @@ export class ThresholdComponent implements OnInit {
       metric.enabled = i === index;
     });
   }
+
+
 }

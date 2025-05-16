@@ -1,12 +1,48 @@
-/* Fond de la page */
+/* 🌟 Fond de la page */
 body {
-  background-color: #F9FAFB; 
+  background-color: #F9FAFB;
   font-family: 'Quicksand', sans-serif;
   margin: 0;
   padding: 0;
 }
 
-/* Autres éléments spécifiques */
+.custom-add-btn {
+  background-color: white;
+  color: #1976d2; /* bleu type Material */
+  border: 1px solid #1976d2;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-weight: 500;
+  font-size: 16px;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.custom-add-btn:hover {
+  background-color: #e3f2fd;
+  border-color: #1565c0;
+}
+
+/* 🧭 Header */
+.header {
+  padding: 20px;
+  border-bottom: 1px solid #E5E7EB;
+  color: #1F2937;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1F2937;
+  margin-bottom: 20px;
+}
+
+.category {
+  font-size: 1rem;
+  color: #6B7280;
+}
+
+/* 🧩 Popup / Modal */
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -21,30 +57,31 @@ body {
 }
 
 .popup-box {
-  background: #FFFFFF; 
+  background: #F9FAFB;
   padding: 20px 25px;
-  border-radius: 10px;
-  width: 60%;
-  max-width: 950px;
+  border-radius: 16px;
+  width: 40%;
+  max-width: 700px;
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  border: 1px solid #E5E7EB; 
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #E5E7EB;
 }
 
 .popup-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #E5E7EB; 
+  border-bottom: 1px solid #E5E7EB;
   padding-bottom: 10px;
-  color: #1F2937; 
 }
 
 .popup-header .modal-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 10px;
 }
 
 .popup-header .btn-close {
@@ -54,19 +91,78 @@ body {
   cursor: pointer;
   padding: 0;
   margin: 0;
+  color: #6B7280;
+  transition: transform 0.2s ease;
 }
 
-/* Bouton de fermeture */
 .popup-header .btn-close:hover {
-  color: #6366F1; 
+  transform: scale(1.1);
+  color: #4F46E5;
 }
 
 .popup-body {
   padding-top: 1rem;
-  color: #1F2937; 
+  color: #1F2937;
+  border-top: 1px solid #E5E7EB;
 }
 
-/* Liste des agents */
+.popup-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+/* 🔘 Boutons */
+button, .btn {
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  background-color: #6366F1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+button:hover, .btn:hover {
+  background-color: #4F46E5;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+}
+
+button.btn-outline-secondary {
+  background-color: white;
+  color: #4B5563;
+  border: 1px solid #D1D5DB;
+}
+
+button.btn-outline-secondary:hover {
+  background-color: #F3F4F6;
+  color: #111827;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 🧾 Formulaires */
+input, textarea {
+  border-radius: 8px;
+  border: 1px solid #D1D5DB;
+  background-color: #F9FAFB;
+  color: #1F2937;
+  padding: 0.5rem;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #9CA3AF;
+}
+
+input:focus, textarea:focus {
+  border-color: #6366F1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+  outline: none;
+  background-color: #FFFFFF;
+}
+
+/* 🧾 Liste des agents */
 .agents-list {
   margin-top: 15px;
   display: flex;
@@ -77,8 +173,11 @@ body {
 .agents-list div {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #E5E7EB; 
-  color: #1F2937; 
+  border-bottom: 1px solid #E5E7EB;
+  color: #1F2937;
+  padding: 10px;
+  background-color: #F3F4F6;
+  border-radius: 8px;
 }
 
 .agents-list img {
@@ -88,48 +187,67 @@ body {
   margin-right: 10px;
 }
 
-/* Styles généraux pour les boutons et les champs de saisie */
-input, textarea, .popup-box, .agents-list div {
-  background-color: #F3F4F6; 
-  border: 1px solid #E5E7EB; 
-  border-radius: 8px;
-  padding: 10px;
+/* 📱 Responsive */
+@media (max-width: 768px) {
+  .popup-box {
+    width: 90%;
+    padding: 20px;
+  }
+  
+  .popup-footer {
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .popup-footer button {
+    width: 100%;
+  }
 }
 
-/* Facultatif : style pour les champs de texte et autres inputs */
-input:focus, textarea:focus {
-  background-color: #FFFFFF; 
-  border-color: #6366F1; 
+table.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+
+  thead {
+    background-color: #f1f5f9;
+    th {
+      padding: 12px 15px;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+  }
+
+  tbody {
+    tr {
+      background-color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      td {
+        padding: 12px 15px;
+        color: #374151;
+        vertical-align: middle;
+
+        i.fa {
+          font-size: 16px;
+          cursor: pointer;
+          margin-right: 8px;
+        }
+      }
+    }
+  }
 }
 
-/* Ajout de la couleur principale pour les boutons */
-button, .btn {
-  background-color: #6366F1; 
-  color: white; 
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-/* Effet hover pour les boutons */
-button:hover, .btn:hover {
-  background-color: #4C51BF; 
-}
-
-/* Styles spécifiques pour les boutons "New Agent Group" et "Create" */
-.new-agent-group, .create-btn {
-  background-color: #6366F1; 
-  color: white; 
-  padding: 10px 15px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-/* Effet hover pour ces boutons */
-.new-agent-group:hover, .create-btn:hover {
-  background-color: #4C51BF; 
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
 }

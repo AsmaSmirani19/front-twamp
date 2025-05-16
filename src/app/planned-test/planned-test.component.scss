@@ -1,3 +1,20 @@
+.custom-add-btn {
+  background-color: white;
+  color: #1976d2; /* bleu type Material */
+  border: 1px solid #1976d2;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-weight: 500;
+  font-size: 16px;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.custom-add-btn:hover {
+  background-color: #e3f2fd;
+  border-color: #1565c0;
+}
+
 /* Overlay de la fenêtre modale */
 .wizard-overlay {
   position: fixed;
@@ -14,7 +31,7 @@
 
 /* Fenêtre modale avec bords arrondis et ombre */
 .wizard-popup {
-  background: #FFFFFF; /* Fond blanc */
+  background: #d64141; /* Fond blanc */
   border-radius: 8px;
   width: 700px;
   max-width: 95%;
@@ -108,7 +125,7 @@
 
 /* Fond de page gris clair */
 body {
-  background-color: #F9FAFB; /* Gris clair pour l'arrière-plan des pages */
+  background-color: #979ca1; /* Gris clair pour l'arrière-plan des pages */
 }
 
 /* Inputs, textareas et selects avec fond gris doux */
@@ -124,6 +141,58 @@ input, textarea, select {
 input:focus, textarea:focus, select:focus {
   border-color: #6366F1; /* Indigo 500 au focus */
   outline: none;
+}
+
+
+table.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+
+  thead {
+    background-color: #f1f5f9;
+    th {
+      padding: 12px 15px;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+  }
+
+  tbody {
+    tr {
+      background-color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      td {
+        padding: 12px 15px;
+        color: #374151;
+        vertical-align: middle;
+
+        .control-icon i.fa {
+          font-size: 16px;
+        }
+
+        i.fa {
+          font-size: 16px;
+          cursor: pointer;
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
 }
 
 

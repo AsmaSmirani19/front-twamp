@@ -14,8 +14,8 @@ export class QuickTestComponent implements OnInit {
   agents: any[] = [];
   testProfiles: any[] = [];
   thresholds: any[] = [];
-  quickTests: any[] = []; // Ajouté pour le tableau des tests rapides
-  showQuickPopup: boolean = false; // Contrôle de l'affichage de la popup
+  quickTests: any[] = [];
+  showQuickPopup: boolean = false;
 
   testForm = {
     name: '',
@@ -24,9 +24,8 @@ export class QuickTestComponent implements OnInit {
     agentSource: '',
     agentDestination: '',
     qosProfile: '',
-    threshold: 0
+    threshold: ''
   };
-  
 
   constructor(
     private agentService: AgentService,
@@ -40,37 +39,54 @@ export class QuickTestComponent implements OnInit {
     this.loadAgents();
     this.loadTestProfiles();
     this.loadThresholds();
-    this.loadQuickTests(); // Chargement des tests rapides existants
+    this.loadQuickTests();
   }
 
   loadAgents(): void {
     this.agentService.getAgents().subscribe({
-      next: (agents) => this.agents = agents,
-      error: (err) => console.error('Erreur lors de la récupération des agents :', err)
+      next: (data) => {
+        this.agents = data;
+        console.log("✅ Agents chargés :", this.agents);
+      },
+      error: (err) => console.error("❌ Erreur agents :", err)
     });
   }
 
   loadTestProfiles(): void {
     this.testProfileService.getTestProfiles().subscribe({
-      next: (profiles) => this.testProfiles = profiles,
-      error: (err) => console.error('Erreur lors de la récupération des profils de test :', err)
+      next: (profiles) => {
+        this.testProfiles = profiles;
+        console.log("✅ Profils chargés :", this.testProfiles);
+      },
+      error: (err) => console.error('❌ Erreur profils :', err)
     });
+  }
+
+  getThresholdName(id: number): string {
+    const t = this.thresholds.find(th => th.id === id);
+    return t ? t.name : 'Seuil inconnu';
   }
 
   loadThresholds(): void {
     this.thresholdService.getThresholds().subscribe({
-      next: (thresholds) => this.thresholds = thresholds,
-      error: (err) => console.error('Erreur lors du chargement des thresholds :', err)
+      next: (thresholds) => {
+        this.thresholds = thresholds;
+        console.log("✅ Thresholds chargés :", this.thresholds);
+      },
+      error: (err) => console.error('❌ Erreur thresholds :', err)
     });
   }
 
   loadQuickTests(): void {
     this.testService.getTests().subscribe({
-      next: (tests) => this.quickTests = tests,
-      error: (err) => console.error('Erreur lors de la récupération des tests rapides :', err)
+      next: (tests) => {
+        this.quickTests = tests
+          .filter(t => t.test_type === 'quick_test')
+          .map(t => ({ ...t, isPaused: false })); // Ajoute `isPaused` à chaque test
+      },
+      error: (err) => console.error('❌ Erreur quick tests :', err)
     });
   }
-  
 
   openQuickTestPopup(): void {
     this.showQuickPopup = true;
@@ -86,6 +102,7 @@ export class QuickTestComponent implements OnInit {
   }
 
   formatDuration(duration: string): string {
+    if (!duration) return 'Non défini';
     return duration.replace('s', ' sec');
   }
 
@@ -104,41 +121,37 @@ export class QuickTestComponent implements OnInit {
       failed: false,
       completed: false
     };
-  
+
     this.testService.createTest(payload).subscribe({
       next: () => {
         alert('✅ Test enregistré avec succès dans la base de données');
         this.closeQuickTestPopup();
-        this.loadQuickTests(); // Mise à jour du tableau
+        this.loadQuickTests();
       },
       error: (err) => alert('❌ Erreur lors de l’enregistrement : ' + err.message)
     });
   }
-  
 
-  createNormalTest(): void {
-    const payload: TestDto = {
-      test_name: 'Normal test',
-      test_duration: '30s',
-      number_of_agents: 2,
-      source_id: 1,
-      target_id: 2,
-      profile_id: 1,
-      threshold_id: 1,
-      creation_date: new Date().toISOString(),
-      test_type: 'scheduled_test',
-      waiting: true,
-      failed: false,
-      completed: false
-    };
-
-    this.testService.createTest(payload).subscribe({
-      next: () => console.log('✅ Test normal enregistré avec succès'),
-      error: (err) => console.error('❌ Erreur lors de la création :', err)
+  onDeleteTest(testId: number): void {
+    this.testService.deleteTest(testId).subscribe({
+      next: () => {
+        console.log('✅ Test supprimé avec succès.');
+        this.loadQuickTests();
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors de la suppression du test :', err);
+      }
     });
   }
 
-  onSubmit(): void {
+  toggleControl(test: any): void {
+    test.isPaused = !test.isPaused;
+    console.log(`Test "${test.test_name}" ${test.isPaused ? 'en pause' : 'repris'}`);
+    // Tu peux ici envoyer une requête backend si tu veux vraiment "pauser" le test
+  }
+
+  onSubmit(form: any): void {
+    if (form.invalid) return;
     console.log('Détails du test soumis :', this.testForm);
     this.launchQuickTest();
   }

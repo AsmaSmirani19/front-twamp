@@ -7,6 +7,7 @@ import { ThresholdService } from '../threshold/threshold.service';
 import { TestService } from '../services/test.services';
 
 export interface PlannedTest {
+  id: number; // Ajout du champ id
   name: string;
   duration: string;
   numberOfAgents: number;
@@ -65,17 +66,20 @@ export class PlannedTestComponent implements OnInit {
     this.testService.getTests().subscribe({
       next: (testsFromAPI: any[]) => {
         if (Array.isArray(testsFromAPI)) {
-          this.tableData.dataRows = testsFromAPI.map(test => ({
-            name: test.test_name,
-            duration: test.test_duration,
-            numberOfAgents: test.number_of_agents,
-            createdAt: test.creation_date,
-            isPaused: false,
-            agentGroupId: test.agent_group_id,
-            agentId: test.agent_id,
-            testProfileId: test.test_profile_id,
-            thresholdName: test.threshold_name
-          }));
+          this.tableData.dataRows = testsFromAPI
+            .filter(test => test.test_type === 'planned_test')
+            .map(test => ({
+              id: test.id,  // <-- ajout de l'id ici
+              name: test.test_name,
+              duration: test.test_duration,
+              numberOfAgents: test.number_of_agents,
+              createdAt: test.creation_date,
+              isPaused: false,
+              agentGroupId: test.agent_group_id,
+              agentId: test.agent_id,
+              testProfileId: test.test_profile_id,
+              thresholdName: test.threshold_name
+            }));
         } else {
           console.error('Données invalides reçues');
         }
@@ -165,7 +169,7 @@ export class PlannedTestComponent implements OnInit {
   createAndAddTest(): void {
     const name = this.testPlan.name.trim();
     const durationStr = this.testPlan.duration.trim();
-  
+
     if (!name || !durationStr) {
       console.error('❌ Le nom et la durée du test sont obligatoires.');
       return;
@@ -180,28 +184,26 @@ export class PlannedTestComponent implements OnInit {
     let agentGroupId: string | null = null;
     if (this.selectedAgentGroupId) {
       agentGroupId = this.selectedAgentGroupId;
-  
-      // ✅ Compter les agents appartenant au groupe
+
       const agentsInGroup = this.agents.filter(agent => agent.group_id === agentGroupId);
       numberOfAgents = agentsInGroup.length;
-  
+
       if (numberOfAgents === 0) {
         console.error('❌ Aucun agent trouvé dans le groupe sélectionné.');
         return;
       }
-  
-      // Pour l'exemple, on peut prendre le premier agent comme source et cible
+
       agentIdNumber = agentsInGroup[0]?.id;
     } else if (this.selectedAgentId) {
       agentIdNumber = Number(this.selectedAgentId);
       numberOfAgents = 1;
     }
-  
+
     if (!agentIdNumber || agentIdNumber <= 0) {
       console.error('❌ Agent ID manquant ou invalide.');
       return;
     }
-  
+
     const profileId = this.selectedTestProfileId ? Number(this.selectedTestProfileId) : null;
     if (!profileId) {
       console.error('❌ Profil de test non sélectionné.');
@@ -231,9 +233,9 @@ export class PlannedTestComponent implements OnInit {
       is_periodic: false,
       interval: 0
     };
-  
+
     console.log('✅ Payload envoyé au backend :', newTest);
-  
+
     this.testService.createTest(newTest).subscribe({
       next: () => {
         console.log('✅ Test créé avec succès.');
@@ -245,8 +247,26 @@ export class PlannedTestComponent implements OnInit {
       }
     });
   }
-  
 
+  // lancer un test en utilisant l'id direct
+  triggerTestFromUI(test: PlannedTest): void {
+    console.log('🟡 triggerTestFromUI appelé avec test:', test); // <- ici
+  
+    if (!test || !test.id) {
+      console.error('Test invalide pour déclenchement.');
+      return;
+    }
+  
+    this.testService.triggerTest(test.id).subscribe({
+      next: () => {
+        console.log(`✅ Test déclenché avec succès (ID: ${test.id})`);
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors du déclenchement du test :', err);
+      }
+    });
+  }
+  
 
   submitWizard(): void {
     if (!this.selectedAgentId) {
@@ -255,7 +275,6 @@ export class PlannedTestComponent implements OnInit {
     }
     this.createAndAddTest();
   }
-  
 
   finishWizard(): void {
     this.createAndAddTest();
@@ -282,7 +301,7 @@ export class PlannedTestComponent implements OnInit {
     test.isPaused = !test.isPaused;
   }
 
-  trackByTestId(index: number, test: PlannedTest): string {
-    return test.createdAt;
+  trackByTestId(index: number, test: PlannedTest): number {
+    return test.id;
   }
 }

@@ -1,44 +1,52 @@
 <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <!-- Table -->
-          <div class="content table-responsive table-full-width">
-            <table class="table table-hover table-striped">
-              <thead>
-                <tr>
-                  <th>Planning</th>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Started At</th>
-                  <th>Agent</th>
-                  <th>Group</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let result of testResults">
-                  <td>{{ result.planning }}</td>
-                  <td>{{ result.name }}</td>
-                  <td>{{ result.type }}</td>
-                  <td>{{ result.status }}</td>
-                  <td>{{ result.startedAt }}</td>
-                  <td>{{ result.agent }}</td>
-                  <td>{{ result.group }}</td>
-                  <td>
-                    <i class="fa fa-eye text-info" (click)="onView(result)" style="cursor:pointer;" title="View"></i>
-                    <i class="fa fa-trash text-danger" (click)="onDelete(result)" style="cursor:pointer;" title="Delete"></i>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-body table-responsive">
+          <table class="table table-hover" *ngIf="testResults && testResults.length > 0">
+            <thead>
+              <tr>
+                <th>Planning</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Started At</th>
+                <th>Agent</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let result of testResults">
+                <td>{{ result.planning }}</td>
+                <td>{{ result.name }}</td>
+                <td>{{ result.type }}</td>
+                <td>
+                  <span class="tag" [ngClass]="{
+                    'tag-success': result.status === 'max_status',
+                    'tag-warning': result.status === 'avg_status',
+                    'tag-danger': result.status === 'min_status'
+                  }">
+                    {{ result.status }}
+                  </span>
+                </td>
+                <td>{{ result.startedAt | date:'short' }}</td>
+                <td>{{ result.agent }}</td>
+                <td>
+                  <i class="fa fa-eye text-info me-2" (click)="onView(result)" style="cursor:pointer;"></i>
+                  <i class="fa fa-trash text-danger" (click)="onDelete(result)" style="cursor:pointer;"></i>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="!testResults || testResults.length === 0" class="text-center text-muted">No results found.</div>
         </div>
       </div>
     </div>
   </div>
+</div>
   
+
+
   <!-- Popup styled like Pinterest -->
 <div class="pinterest-popup-overlay" *ngIf="selectedResult">
   <div class="pinterest-popup-card">

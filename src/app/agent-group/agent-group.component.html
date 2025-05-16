@@ -1,40 +1,43 @@
 <div class="main-content">
   <div class="container-fluid">
-    <div class="row">
-      <!-- Tableau agent group -->
-      <div class="col-md-12">
-        <div class="card">
-          <!-- Titre + Bouton New Agent Group -->
-          <div class="header d-flex justify-content-between align-items-center">
-            <div>
-              <h4 class="title mb-0">Agent Groups</h4>
-              <p class="category">List of agent groups</p>
-            </div>
-            <button class="btn btn-primary" (click)="onNewAgentGroup()">New Agent Group</button>
-          </div>
 
-<!-- Tableau -->
-<div class="content table-responsive table-full-width">
-  <table class="table table-hover table-striped">
-    <thead>
-      <tr>
-        <th *ngFor="let cell of tableData.headerRow">{{ cell }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let row of tableData.dataRows">
-        <td>{{ row.group_name }}</td>
-        <td>{{ row.number_of_agents || 0 }}</td> 
-        <td>{{ row.creation_date }}</td>
-        <td>
-          <i class="fa fa-eye text-info me-2" title="Voir" style="cursor: pointer;" (click)="onView(row)"></i>
-          <i class="fa fa-pencil text-warning me-2" title="Modifier" style="cursor: pointer;" (click)="onEdit(row)"></i>
-          <i class="fa fa-trash text-danger" title="Supprimer" style="cursor: pointer;" (click)="onDelete(row)"></i>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+    <!-- Titre + Bouton New Agent Group -->
+    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 0.7cm;">
+      <button class="custom-add-btn" (click)="onNewAgentGroup()">
+        <i class="fa fa-plus me-2"></i> New Agent Group
+      </button>
+    </div>
+
+    <!-- Tableau -->
+    <div class="card-body table-responsive">
+      <table class="table table-hover" *ngIf="tableData.dataRows && tableData.dataRows.length > 0">
+        <thead>
+          <tr>
+            <th *ngFor="let cell of tableData.headerRow">{{ cell }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of tableData.dataRows">
+            <td>{{ row.group_name }}</td>
+            <td>{{ row.number_of_agents || 0 }}</td>
+            <td>{{ row.creation_date | date:'short' }}</td>
+            <td>
+              <i class="fa fa-eye text-info me-2" (click)="onView(row)" style="cursor:pointer;"></i>
+              <i class="fa fa-pencil text-warning me-2" (click)="onEdit(row)" style="cursor:pointer;"></i>
+              <i class="fa fa-trash text-danger" (click)="onDelete(row)" style="cursor:pointer;"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!tableData.dataRows || tableData.dataRows.length === 0" class="text-center text-muted">
+        No agent groups found
+      </div>
+    </div>
+
+  </div>
 </div>
+
+
 
 <!-- Popup de création -->
 <div class="popup-overlay" *ngIf="newGroupPopupVisible">
@@ -94,7 +97,7 @@
                 class="form-check-input"
               />
               <label class="form-check-label" [for]="'agent-' + agent.id">
-                {{ agent.name }} <small class="text-muted">({{ agent.domain || 'No domain' }})</small>
+                {{ agent.name }} 
               </label>
             </div>
           </div>
