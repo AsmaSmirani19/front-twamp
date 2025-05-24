@@ -14,139 +14,182 @@ export class AgentGroupComponent implements OnInit {
   };
 
   selectedGroup: AgentGroup | null = null;
-  newGroupPopupVisible: boolean = false;
-  searchTerm: string = '';
+  viewGroupPopupVisible = false;
+  newGroupPopupVisible = false;
+  searchTerm = '';
 
-  // APRÈS :
-  newGroup: any = {
-  group_name: '',
-  creation_date: new Date().toISOString().split('T')[0],
-  agents: []  // On garde seulement la liste des agents
-};
+  newGroup: {
+    group_name: string;
+    creation_date: string;
+    agents: Agent[];
+  } = {
+    group_name: '',
+    creation_date: new Date().toISOString().split('T')[0],
+    agents: []
+  };
 
   availableAgents: Agent[] = [];
   filteredAgents: Agent[] = [];
-
-  viewGroupPopupVisible: boolean = false;  // Variable pour afficher la popup de visualisation du groupe
 
   constructor(
     private agentGroupService: AgentGroupService,
     private agentService: AgentService
   ) {}
-  
+
   ngOnInit(): void {
     this.loadAgents();
     this.loadAgentGroups();
   }
-  
 
   loadAgentGroups(): void {
     this.agentGroupService.getAgentGroups().subscribe({
       next: (groups) => {
-        console.log('Réponse brute groupes:', groups); 
-        console.table(groups); // 🔥 Ajoute ça pour voir proprement
-        this.tableData.dataRows = groups.map(g => ({
-          ...g,
-          agents: g.agents || [],
-          number_of_agents: g.agents?.length || 0
-        }));
-        console.log('Groupes chargés après traitement:', this.tableData.dataRows);
+        console.log('📥 Données brutes reçues du backend:', groups);
+  
+        this.tableData.dataRows = groups;
+  
+        console.log('📊 DataRows affectés:', this.tableData.dataRows);
       },
-      error: (err) => console.error(err)
+      error: (err) => console.error('Erreur chargement groupes:', err)
     });
   }
   
   
 
+  // 📦 Chargement des agents
   loadAgents(): void {
     this.agentService.getAgents().subscribe({
-      next: (data: Agent[]) => {
+      next: (data) => {
         this.availableAgents = data;
         this.filteredAgents = [...data];
       },
-      error: (err) => {
-        console.error('Erreur lors de la récupération des agents', err);
-      }
+      error: (err) => console.error('Erreur chargement agents:', err)
     });
   }
 
+  // ➕ Afficher popup création
   onNewAgentGroup(): void {
     this.resetNewGroup();
     this.newGroupPopupVisible = true;
   }
 
-  closePopup(): void {
-    this.selectedGroup = null;
-  }
-
+  // ❌ Fermer popup création
   closeNewGroupPopup(): void {
     this.newGroupPopupVisible = false;
     this.resetNewGroup();
   }
 
+  // ❌ Fermer popup vue
+  closeViewGroupPopup(): void {
+    this.viewGroupPopupVisible = false;
+    this.selectedGroup = null;
+  }
+
+  // 🔁 Reset du formulaire
+  resetNewGroup(): void {
+    this.newGroup = {
+      group_name: '',
+      creation_date: new Date().toISOString().split('T')[0],
+      agents: []
+    };
+    this.searchTerm = '';
+    this.filteredAgents = [...this.availableAgents];
+  }
+
+  // 🔍 Filtrage d’agents
+  onSearchChange(): void {
+    const normalize = (text: string) =>
+      text?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+    const term = normalize(this.searchTerm || '');
+    this.filteredAgents = term
+      ? this.availableAgents.filter(agent => normalize(agent.name).includes(term))
+      : [...this.availableAgents];
+  }
+
+  // ✅ Créer un nouveau groupe
   createGroup(): void {
     if (!this.newGroup.group_name.trim()) {
       alert('Le nom du groupe est requis.');
       return;
     }
-  
+
     if (this.newGroup.agents.length === 0) {
       alert('Au moins un agent doit être sélectionné.');
       return;
     }
-  
-    const payloadForApi = {
+
+    const payload = {
       group_name: this.newGroup.group_name,
-      number_of_agents: this.newGroup.agents.length,
-      creation_date: new Date().toISOString(),
-      agent_ids: this.newGroup.agents.map((agent: Agent) => agent.id) // 👈 ajouter les agents
+      creation_date: new Date().toISOString()
     };
-  
-    this.agentGroupService.createAgentGroup(payloadForApi).subscribe({
-      next: (createdGroup: AgentGroup) => {
-        console.log('Groupe créé avec succès:', createdGroup);
-        this.closeNewGroupPopup();
-        this.loadAgentGroups();
+
+    this.agentGroupService.createAgentGroup(payload).subscribe({
+      next: (createdGroup) => {
+        const linkPayload = {
+          group_id: createdGroup.id,
+          agent_ids: this.newGroup.agents.map(agent => agent.id)
+        };
+        console.log('🔗 Envoi liaison agents:', linkPayload);
+        this.agentService.linkAgentsToGroup(linkPayload).subscribe({
+          next: () => {
+            console.log('✅ Agents liés avec succès');
+            this.closeNewGroupPopup();
+            this.loadAgentGroups();
+          },
+          error: (err) => {
+            console.error('Erreur liaison agents:', err);
+            alert('Erreur lors de la liaison des agents au groupe.');
+          }
+        });
       },
       error: (err) => {
-        console.error('Erreur lors de la création du groupe:', err);
+        console.error('Erreur création groupe:', err);
         alert('Une erreur est survenue lors de la création du groupe.');
       }
     });
   }
-  
 
-  resetNewGroup(): void {
-    this.newGroup = {
-      group_name: '',
-      number_of_agents: 0,
-      creation_date: new Date().toISOString().split('T')[0],
-      agents: []
-    };
-    this.searchTerm = '';
-    this.filteredAgents = [...this.availableAgents]; // Réinitialiser les agents filtrés
+  // 👁 Afficher les détails d’un groupe
+  onView(group: AgentGroup): void {
+    if (!group.id) return;
+
+    this.agentService.getAgentsByGroup(group.id).subscribe({
+      next: (agents) => {
+        this.selectedGroup = { ...group, agents };
+        this.viewGroupPopupVisible = true;
+      },
+      error: (err) => {
+        console.error('Erreur chargement agents liés:', err);
+        alert('Impossible de charger les agents du groupe.');
+      }
+    });
   }
 
-  onSearchChange(): void {
-    console.log('Search term:', this.searchTerm);
-    const normalize = (text: string) =>
-      text?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  
-    const term = normalize(this.searchTerm || '');
-  
-    this.filteredAgents = term
-      ? this.availableAgents.filter(agent =>
-          normalize(agent.name).includes(term)
-        )
-      : [...this.availableAgents];
-  
-    console.log('Filtered agents:', this.filteredAgents);
+  // ❌ Supprimer un groupe
+  onDelete(group: AgentGroup): void {
+    if (!group.id) {
+      alert('Erreur : ID du groupe est manquant.');
+      return;
+    }
+
+    if (confirm(`Voulez-vous vraiment supprimer le groupe "${group.group_name}" ?`)) {
+      this.agentGroupService.deleteAgentGroup(group.id).subscribe({
+        next: () => this.loadAgentGroups(),
+        error: (err) => {
+          console.error('Erreur suppression groupe:', err);
+          alert('Une erreur est survenue lors de la suppression du groupe.');
+        }
+      });
+    }
   }
 
+  // 🔄 Sélectionner tous les agents
   toggleSelectAll(checked: boolean): void {
     this.newGroup.agents = checked ? [...this.filteredAgents] : [];
   }
 
+  // ✅/❌ Sélectionner / désélectionner un agent
   toggleAgentSelection(agent: Agent): void {
     const index = this.newGroup.agents.findIndex(a => a.id === agent.id);
     if (index >= 0) {
@@ -154,48 +197,40 @@ export class AgentGroupComponent implements OnInit {
     } else {
       this.newGroup.agents.push({ ...agent });
     }
-
   }
 
+  // ✔ Vérifie si un agent est sélectionné
   isAgentSelected(agent: Agent): boolean {
     return this.newGroup.agents.some(a => a.id === agent.id);
   }
 
-  onDelete(group: AgentGroup): void {
-    if (!group.id) {
-      console.error('ID du groupe est manquant:', group);
-      alert('Erreur : ID du groupe est manquant.');
-      return;  // Empêche la suppression si l'ID est manquant
-    }
-  
-    // Demander une confirmation avant de supprimer
-    if (confirm(`Voulez-vous vraiment supprimer le groupe "${group.group_name}" ?`)) {
-      this.agentGroupService.deleteAgentGroup(group.id).subscribe({
-        next: () => {
-          console.log('✅ Groupe supprimé avec succès');
-          this.loadAgentGroups(); // Rafraîchir la liste après suppression
-        },
-        error: (err) => {
-          console.error('❌ Erreur lors de la suppression du groupe', err);
-          alert('Une erreur est survenue lors de la suppression du groupe.');
-        }
-      });
-    }
+  // ➕ Ajouter un agent à un groupe existant
+  addAgent(agent: Agent): void {
+    if (!this.selectedGroup) return;
+
+    this.agentService.addAgentToGroup(this.selectedGroup.id!, agent.id!).subscribe({
+      next: () => {
+        this.selectedGroup?.agents.push(agent);
+      },
+      error: (err) => {
+        console.error('Erreur ajout agent:', err);
+        alert('Erreur lors de l’ajout de l’agent.');
+      }
+    });
   }
 
-  // Nouvelle méthode pour afficher les détails du groupe sélectionné
-  onView(row: AgentGroup): void {
-    this.selectedGroup = {
-      ...row,
-      agents: row.agents || [] // Garantit la cohérence
-    };
-    console.log('Groupe sélectionné:', this.selectedGroup); // DEBUG
-    this.viewGroupPopupVisible = true;
-  }
+  // ➖ Supprimer un agent d’un groupe
+  removeAgent(agent: Agent): void {
+    if (!this.selectedGroup) return;
 
-  // Méthode pour fermer la popup d'affichage du groupe
-  closeViewGroupPopup(): void {
-    this.viewGroupPopupVisible = false;
-    this.selectedGroup = null;
+    this.agentService.removeAgentFromGroup(this.selectedGroup.id!, agent.id!).subscribe({
+      next: () => {
+        this.selectedGroup!.agents = this.selectedGroup!.agents.filter(a => a.id !== agent.id);
+      },
+      error: (err) => {
+        console.error('Erreur suppression agent:', err);
+        alert('Erreur lors de la suppression de l’agent.');
+      }
+    });
   }
 }

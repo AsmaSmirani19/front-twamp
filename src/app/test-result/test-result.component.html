@@ -6,31 +6,23 @@
           <table class="table table-hover" *ngIf="testResults && testResults.length > 0">
             <thead>
               <tr>
-                <th>Planning</th>
                 <th>Name</th>
                 <th>Type</th>
                 <th>Status</th>
-                <th>Started At</th>
                 <th>Agent</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let result of testResults">
-                <td>{{ result.planning }}</td>
-                <td>{{ result.name }}</td>
-                <td>{{ result.type }}</td>
+              <tr *ngFor="let result of testResults; trackBy: trackByTestId">
+                <td>{{ result.testName }}</td>
+                <td>{{ result.testType }}</td>
                 <td>
-                  <span class="tag" [ngClass]="{
-                    'tag-success': result.status === 'max_status',
-                    'tag-warning': result.status === 'avg_status',
-                    'tag-danger': result.status === 'min_status'
-                  }">
+                  <span class="tag" [ngClass]="getStatusClass(result.status)">
                     {{ result.status }}
                   </span>
                 </td>
-                <td>{{ result.startedAt | date:'short' }}</td>
-                <td>{{ result.agent }}</td>
+                <td>{{ result.sourceAgent }}</td>
                 <td>
                   <i class="fa fa-eye text-info me-2" (click)="onView(result)" style="cursor:pointer;"></i>
                   <i class="fa fa-trash text-danger" (click)="onDelete(result)" style="cursor:pointer;"></i>
@@ -44,29 +36,27 @@
     </div>
   </div>
 </div>
-  
 
-
-  <!-- Popup styled like Pinterest -->
+<!-- Popup styled like Pinterest -->
 <div class="pinterest-popup-overlay" *ngIf="selectedResult">
   <div class="pinterest-popup-card">
     <div class="popup-header">
-      <h4>{{ selectedResult.name }}</h4>
+      <h4>{{ selectedResult.testName }}</h4>
       <button class="close-btn" (click)="closePopup()">×</button>
     </div>
     <div class="popup-body">
       <p><strong>Status:</strong> {{ selectedResult.status }}</p>
-      <p><strong>Creation Date:</strong> {{ selectedResult.startedAt }}</p>
-      <p><strong>Duration:</strong> {{ selectedResult.duration }}</p>
-      <p><strong>Agent Name:</strong> {{ selectedResult.agent }}</p>
-      <p><strong>Agent Group:</strong> {{ selectedResult.group }}</p>
-      <p><strong>Target:</strong> {{ selectedResult.target }}</p>
-      <p><strong>Min Value:</strong> {{ selectedResult.minValue }}</p>
-      <p><strong>Max Value:</strong> {{ selectedResult.maxValue }}</p>
-      <p><strong>Avg Value:</strong> {{ selectedResult.avgValue }}</p>
-      <p><strong>Success Rate:</strong> {{ selectedResult.successRate }}</p>
-      <p><strong>Threshold Name:</strong> {{ selectedResult.thresholdName }}</p>
-      <p><strong>Threshold Value:</strong> {{ selectedResult.thresholdValue }}</p>
+      <p><strong>Creation Date:</strong> {{ selectedResult.creationDate | date:'short' }}</p>
+      <p><strong>Duration:</strong> {{ selectedResult.testDuration }}</p>
+      <p><strong>Source Agent:</strong> {{ selectedResult.sourceAgent }}</p>
+      <p><strong>Target Agent:</strong> {{ selectedResult.targetAgent }}</p>
+
+      <p *ngIf="selectedResult.minValue !== undefined"><strong>Min Value:</strong> {{ selectedResult.minValue }}</p>
+      <p *ngIf="selectedResult.maxValue !== undefined"><strong>Max Value:</strong> {{ selectedResult.maxValue }}</p>
+      <p *ngIf="selectedResult.avgValue !== undefined"><strong>Avg Value:</strong> {{ selectedResult.avgValue }}</p>
+      <p *ngIf="selectedResult.successRate !== undefined"><strong>Success Rate:</strong> {{ selectedResult.successRate }}</p>
+      <p *ngIf="selectedResult.thresholdName !== undefined"><strong>Threshold Name:</strong> {{ selectedResult.thresholdName }}</p>
+      <p *ngIf="selectedResult.thresholdValue !== undefined"><strong>Threshold Value:</strong> {{ selectedResult.thresholdValue }}</p>
     </div>
   </div>
 </div>

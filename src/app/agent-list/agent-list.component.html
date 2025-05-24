@@ -7,52 +7,56 @@
         <i class="fa fa-plus me-2"></i> New Agent
       </button>
     </div>
-
     <!-- Tableau -->
     <div class="card-body table-responsive">
-      <table class="table table-hover" *ngIf="filteredAgents && filteredAgents.length > 0">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th *ngFor="let header of headerRow">{{ header }}</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let agent of filteredAgents; let i = index">
-            <td>{{ i + 1 }}</td>
-            <td class="fw-medium">{{ agent.name }}</td>
-            <td>{{ agent.address }}</td>
-            <td>
-              <i class="fa fa-circle"
-                [ngClass]="agent.testHealth ? 'text-success' : 'text-danger'"
-                [title]="agent.testHealth ? 'Healthy' : 'Unhealthy'">
-              </i>
-            </td>
-            <td>
-              <span class="tag"
-                [ngClass]="{
-                  'tag-success': agent.availability >= 99,
-                  'tag-warning': agent.availability >= 80 && agent.availability < 99,
-                  'tag-danger': agent.availability < 80
-                }">
-                {{ agent.availability.toFixed(1) }}%
-              </span>
-            </td>
-            <td>
-              <i class="fa fa-check text-success me-2" title="Validate" style="cursor:pointer;"></i>
-              <i class="fa fa-trash text-danger" title="Delete" style="cursor:pointer;" (click)="deleteAgent(agent.id)"></i>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="!filteredAgents || filteredAgents.length === 0" class="text-center text-muted">
-        No agents found
-      </div>
-    </div>
+  <table class="table table-hover" *ngIf="filteredAgents && filteredAgents.length > 0">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Agent Name</th>
+        <th>Address</th>
+        <th>Test Health</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let agent of filteredAgents; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td class="fw-medium">{{ agent.name }}</td>
+        <td>{{ agent.address }}</td>
+        <td>
+          <i
+            class="fa fa-circle"
+            [ngClass]="agent.testHealth ? 'text-success' : 'text-danger'"
+            [title]="agent.testHealth ? 'Healthy' : 'Unhealthy'"
+          ></i>
+          <small class="ms-2">{{ agent.testhealth }}</small>
 
+        </td>
+        <td>
+          <i
+            class="fa fa-stethoscope text-primary me-2"
+            title="Check Health"
+            style="cursor:pointer;"
+            (click)="loadAgents()"
+          ></i>
+          <i
+            class="fa fa-trash text-danger"
+            title="Delete"
+            style="cursor:pointer;"
+            (click)="deleteAgent(agent.id)"
+          ></i>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!filteredAgents || filteredAgents.length === 0" class="text-center text-muted">
+    No agents found
   </div>
 </div>
+
+
 
 
   <!-- Pop-up de création d'agent -->

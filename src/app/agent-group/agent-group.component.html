@@ -19,7 +19,7 @@
         <tbody>
           <tr *ngFor="let row of tableData.dataRows">
             <td>{{ row.group_name }}</td>
-            <td>{{ row.number_of_agents || 0 }}</td>
+            <td>{{ row.number_of_agents }}</td>
             <td>{{ row.creation_date | date:'short' }}</td>
             <td>
               <i class="fa fa-eye text-info me-2" (click)="onView(row)" style="cursor:pointer;"></i>
@@ -33,7 +33,6 @@
         No agent groups found
       </div>
     </div>
-
   </div>
 </div>
 
@@ -146,7 +145,6 @@
             <li class="list-group-item" *ngFor="let agent of selectedGroup?.agents">
               <div class="d-flex justify-content-between">
                 <span>{{ agent.name }}</span>
-                <small class="text-muted">{{ agent.domain || 'Sans domaine' }}</small>
               </div>
             </li>
           </ul>

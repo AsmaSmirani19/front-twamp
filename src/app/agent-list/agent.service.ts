@@ -2,19 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-// Définition du type Agent
-export interface Agent {
-  id?: number;
-  name: string;
-  address: string;
-  port: number; 
-  testHealth: boolean;
-  availability: number;
-}
+import { Agent } from './model';
+
+
+
+
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class AgentService {
   // Utilisation de la variable d'environnement pour l'URL de l'API
   private ApiUrl = environment.ApiUrl;

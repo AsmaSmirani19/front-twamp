@@ -3,14 +3,16 @@ export interface Test {
   test_duration: string;
   number_of_agents: number;
   creation_date: string;
-  isPaused: boolean;
+  inProgress?: boolean;
+  isPaused?: boolean; // uniquement si utilisé en UI
 
   test_type: "quick test" | "planned test"; 
   source_id?: number;
   target_id?: number;
   profile_id?: number;
   threshold_id?: number;
-  waiting?: boolean;
   failed?: boolean;
   completed?: boolean;
+  error?: boolean;
 }
+

@@ -1,20 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError , map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-
 
 export interface AgentGroup {
   id?: number;
   group_name: string;
   number_of_agents: number;
   creation_date: string;
-  agents?: any[];
+  agent_ids?: number[];  // Ajouté pour correspondre au backend
+  agents?: any[];        // Optionnel pour l'affichage
 }
 
 @Injectable({
-  providedIn: 'root'  // Le service est injecté dans toute l'application
+  providedIn: 'root'
 })
 export class AgentGroupService {
   private GroupsApiUrl = environment.GroupsApiUrl;
@@ -22,12 +22,13 @@ export class AgentGroupService {
   constructor(private http: HttpClient) {}
 
   getAgentGroups(): Observable<AgentGroup[]> {
-    return this.http.get<AgentGroup[]>(this.GroupsApiUrl).pipe(
+    return this.http.get<any[]>(this.GroupsApiUrl).pipe(
       map(groups => {
         return groups.map(group => ({
           ...group,
-          agents: group.agents || [], // Force un tableau vide si null
-          number_of_agents: (group.agents || []).length // Calcul réel
+      
+          number_of_agents: group.number_of_agents || (group.agent_ids?.length || 0),
+          agents: group.agents || []
         }));
       }),
       catchError(err => {
@@ -55,5 +56,12 @@ export class AgentGroupService {
       })
     );
   }
+
+  getAgentGroupById(id: number): Observable<AgentGroup> {
+    return this.http.get<AgentGroup>(`${this.GroupsApiUrl}/${id}`).pipe(
+      catchError(err => throwError(() => err))
+    );
+  }
+  
   
 }

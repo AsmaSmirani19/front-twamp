@@ -8,14 +8,11 @@ import { TestProfile } from './test-profile.model';
   styleUrls: ['./test-profile.component.scss']
 })
 export class TestProfileComponent implements OnInit {
-
-  // Tableau de profils pour afficher dans la table (initialisé vide)
   testProfiles: TestProfile[] = [];
-
-  // Variable pour la gestion de la popup
   showNewProfilePopup = false;
+  isLoading = false;
+  errorMessage: string | null = null;
 
-  // Données du nouveau profil
   newProfile = {
     name: '',
     timeBetweenAttempts: '',
@@ -24,82 +21,102 @@ export class TestProfileComponent implements OnInit {
 
   constructor(private testProfileService: TestProfileService) { }
 
-  ngOnInit(): void {
-    // Récupérer les profils depuis l'API lors de l'initialisation du composant
+   ngOnInit(): void {
+    console.log('Initialisation du composant');
     this.loadTestProfiles();
   }
 
-  // Fonction pour charger les profils depuis l'API
   loadTestProfiles(): void {
-    this.testProfileService.getTestProfiles().subscribe(
-      (profiles: TestProfile[]) => {
+    this.isLoading = true;
+    this.errorMessage = null;
+    
+    this.testProfileService.getTestProfiles().subscribe({
+      next: (profiles) => {
         this.testProfiles = profiles;
-        console.log('Profiles loaded:', profiles); // Afficher la réponse
+        this.isLoading = false;
+        console.log('Profils chargés:', profiles);
       },
-      (error) => {
-        console.error('Error loading profiles:', error); // Afficher l'erreur
-        if (error.status === 400) {
-          console.error('Bad request, check API response');
-        } else if (error.status === 404) {
-          console.error('API endpoint not found');
-        }
+      error: (error) => {
+        this.errorMessage = 'Failed to load profiles';
+        this.isLoading = false;
+        console.error('Erreur:', error);
       }
-    );
+    });
   }
-  
 
-  // Ouvrir la popup pour créer un nouveau profil
   openNewProfilePopup(): void {
     this.showNewProfilePopup = true;
+    this.errorMessage = null;
   }
 
-  // Fermer la popup
   closeNewProfilePopup(): void {
     this.showNewProfilePopup = false;
-    // Réinitialiser les champs du formulaire
     this.newProfile = { name: '', timeBetweenAttempts: '', packetSize: '' };
   }
 
-  // Fonction pour créer un nouveau profil
-  createNewProfile(): void {
-    // Vérifie que les champs sont remplis
-    if (this.newProfile.name && this.newProfile.timeBetweenAttempts && this.newProfile.packetSize) {
-      const profileToCreate: TestProfile = {
-        profile_name: this.newProfile.name,
-        creation_date: new Date().toISOString(), // Utilisation de toISOString pour un format ISO valide
-        // Conversion de packetSize en nombre
-        packet_size: parseInt(this.newProfile.packetSize, 10)
-      };
-      
-      // Envoie du profil au backend via le service
-      this.testProfileService.createTestProfile(profileToCreate).subscribe(
-        (response: TestProfile) => {
-          console.log('New profile created:', response);
-          // Assure-toi que la réponse est bien de type TestProfile
-          this.testProfiles.push(response); // Ajoute le profil créé à la liste
-          this.closeNewProfilePopup(); // Ferme la popup après création
-        },
-        (error) => {
-          console.error('Error creating profile:', error);
-        }
-      );
-    } else {
-      console.log('Please fill in all fields');
+ createNewProfile(): void {
+  // Reset des erreurs
+  this.errorMessage = null;
+
+  // Validation
+  if (!this.newProfile.name || !this.newProfile.timeBetweenAttempts || !this.newProfile.packetSize) {
+    this.errorMessage = 'Tous les champs sont requis';
+    return;
+  }
+
+  const timeBetweenAttempts = Number(this.newProfile.timeBetweenAttempts);
+  const packetSize = Number(this.newProfile.packetSize);
+
+  if (isNaN(timeBetweenAttempts) || isNaN(packetSize)) {
+    this.errorMessage = 'Les valeurs numériques sont invalides';
+    return;
+  }
+
+  const profileToCreate: Omit<TestProfile, 'id'> = {
+    profile_name: this.newProfile.name.trim(),
+    creation_date: new Date().toISOString(),
+    packet_size: packetSize,
+    time_between_attempts: timeBetweenAttempts
+  };
+
+  this.isLoading = true;
+
+  this.testProfileService.createTestProfile(profileToCreate).subscribe({
+    next: (createdProfile) => {
+      this.testProfiles = [...(this.testProfiles || []), createdProfile];
+      this.closeNewProfilePopup();
+      this.isLoading = false;
+    },
+    error: (err) => {
+      console.error('Erreur complète:', err);
+      this.errorMessage = err.message || 'Erreur lors de la création du profil';
+      this.isLoading = false;
     }
-  }
+  });
+}
 
-  // Editer un profil existant
-  onEdit(profile: TestProfile): void {
-    console.log('Editing profile:', profile);
-    // Ouvrir un formulaire d'édition, si nécessaire
-  }
-
-  // Supprimer un profil
   onDelete(profile: TestProfile): void {
-    const index = this.testProfiles.indexOf(profile);
-    if (index !== -1) {
-      this.testProfiles.splice(index, 1);
-      console.log('Profile deleted:', profile);
+    if (!profile.id) {
+      this.errorMessage = 'Impossible de supprimer: ID manquant';
+      return;
     }
+
+    if (confirm(`Supprimer le profil "${profile.profile_name}" ?`)) {
+      this.testProfileService.deleteTestProfile(profile.id).subscribe({
+        next: () => {
+          this.testProfiles = this.testProfiles.filter(p => p.id !== profile.id);
+          console.log('Profil supprimé:', profile);
+        },
+        error: (error) => {
+          console.error('Erreur suppression:', error);
+          this.errorMessage = 'Échec de la suppression du profil';
+        }
+      });
+    }
+  }
+
+  // À implémenter selon besoin
+  onEdit(profile: TestProfile): void {
+    console.log('Édition du profil:', profile);
   }
 }

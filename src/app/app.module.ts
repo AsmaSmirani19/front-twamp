@@ -16,6 +16,7 @@ import { AppComponent } from './app.component';
 import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
 import { AgentDetailsDialogComponent } from './agent-details-dialog/agent-details-dialog.component';
 
+import { TestProfileComponent } from './test-profile/test-profile.component';
 
 
 @NgModule({
