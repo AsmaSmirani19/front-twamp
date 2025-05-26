@@ -47,7 +47,6 @@
   </div>
 </div>
 
-
   <!-- Details Popup -->
   <div class="popup-overlay" *ngIf="selectedTest">
     <div class="popup-box">
@@ -57,19 +56,34 @@
       </div>
 
       <div class="popup-body">
-        <table class="table table-bordered">
-          <tbody>
-            <tr>
-              <td><span class="control-icon" (click)="toggleControl(selectedTest)">
-                <i [ngClass]="{'fa-pause': selectedTest.isPaused, 'fa-play': !selectedTest.isPaused}"></i></span>
-              </td>
-            </tr>
-            <tr><th>Test Name</th><td>{{ selectedTest.name }}</td></tr>
-            <tr><th>Duration</th><td>{{ selectedTest.duration }}</td></tr>
-            <tr><th>Number of Agents</th><td>{{ selectedTest.numberOfAgents }}</td></tr>
-            <tr><th>Created At</th><td>{{ selectedTest.createdAt | date: 'short' }}</td></tr>
-          </tbody>
-        </table>
+        <ng-container *ngIf="selectedDetailedTest; else loading">
+          <table class="table table-bordered">
+            <tbody>
+              <!-- Pause / Play Control -->
+              <tr>
+                <td colspan="2">
+                  <span class="control-icon" (click)="toggleControl(selectedTest)">
+                    <i [ngClass]="{'fa-pause': selectedTest.isPaused, 'fa-play': !selectedTest.isPaused}"></i>
+                  </span>
+                </td>
+              </tr>
+
+              <!-- Test Details -->
+              <tr><th>Test Name</th><td>{{ selectedDetailedTest.testName }}</td></tr>
+              <tr><th>Source</th><td>{{ selectedDetailedTest.sourceAgent }}</td></tr>
+              <tr><th>Target</th><td>{{ selectedDetailedTest.targetAgent }}</td></tr>
+              <tr><th>Profile Name</th><td>{{ selectedDetailedTest.profileName }}</td></tr>
+              <tr><th>Threshold Name</th><td>{{ selectedDetailedTest.thresholdName }}</td></tr>
+              <tr><th>Threshold Value</th><td>{{ selectedDetailedTest.thresholdValue }} ms</td></tr>
+              <tr><th>Duration</th><td>{{ selectedDetailedTest.testDuration }} seconds</td></tr>
+              <tr><th>Created At</th><td>{{ selectedDetailedTest.creationDate | date: 'short' }}</td></tr>
+            </tbody>
+          </table>
+        </ng-container>
+
+        <ng-template #loading>
+          <p>Chargement des détails du test...</p>
+        </ng-template>
       </div>
     </div>
   </div>

@@ -5,6 +5,7 @@ import { TestProfile } from '../test-profile/test-profile.model';
 import { TestProfileService } from '../test-profile/test-profile.service';
 import { ThresholdService } from '../threshold/threshold.service';
 import { TestService } from '../services/test.services';
+import { PlannedTestService, PlannedTestInfo } from './planned-test.service';
 
 export interface PlannedTest {
   id: number;
@@ -33,7 +34,7 @@ export class PlannedTestComponent implements OnInit {
   selectedTest: PlannedTest | null = null;
   showWizard = false;
   wizardStep = 1;
-yy
+
   testPlan = { name: '', duration: '' };
   selectedAgentGroupId: string | null = null;
   selectedAgentId: number | null = null;
@@ -48,6 +49,7 @@ yy
 
   constructor(
     private testService: TestService,
+    private plannedTestService: PlannedTestService,
     private agentGroupService: AgentGroupService,
     private agentService: AgentService,
     private testProfileService: TestProfileService,
@@ -166,112 +168,110 @@ yy
     this.resetTestPlan();
   }
 
-createAndAddTest(): void {
-  const name = this.testPlan.name.trim();
-  const durationStr = this.testPlan.duration.trim();
+  createAndAddTest(): void {
+    const name = this.testPlan.name.trim();
+    const durationStr = this.testPlan.duration.trim();
 
-  if (!name || !durationStr) {
-    console.error('❌ Le nom et la durée du test sont obligatoires.');
-    return;
-  }
-  const durationNumber = parseInt(durationStr, 10);
-  if (isNaN(durationNumber) || durationNumber <= 0) {
-    console.error('❌ La durée doit être un nombre valide supérieur à 0.');
-    return;
-  }
-  
-  let numberOfAgents = 1;
-  let agentGroupId: string | null = null;
-  let sourceId: number | null = null;
-  let targetId: number | null = null;
-
-  if (this.selectedAgentGroupId) {
-    agentGroupId = this.selectedAgentGroupId;
-
-    const agentsInGroup = this.agents.filter(agent => agent.group_id === agentGroupId);
-    numberOfAgents = agentsInGroup.length;
-
-    if (numberOfAgents === 0) {
-      console.error('❌ Aucun agent trouvé dans le groupe sélectionné.');
+    if (!name || !durationStr) {
+      console.error('❌ Le nom et la durée du test sont obligatoires.');
+      return;
+    }
+    const durationNumber = parseInt(durationStr, 10);
+    if (isNaN(durationNumber) || durationNumber <= 0) {
+      console.error('❌ La durée doit être un nombre valide supérieur à 0.');
       return;
     }
 
-    // source = premier agent
-    sourceId = agentsInGroup[0]?.id;
+    let numberOfAgents = 1;
+    let agentGroupId: string | null = null;
+    let sourceId: number | null = null;
+    let targetId: number | null = null;
 
-    // target = deuxième agent si existant sinon null
-    targetId = agentsInGroup.length > 1 ? agentsInGroup[1].id : null;
+    if (this.selectedAgentGroupId) {
+      agentGroupId = this.selectedAgentGroupId;
 
-  } else if (this.selectedAgentId) {
-    const agentIdNumber = Number(this.selectedAgentId);
-    numberOfAgents = 1;
+      const agentsInGroup = this.agents.filter(agent => agent.group_id === agentGroupId);
+      numberOfAgents = agentsInGroup.length;
 
-    sourceId = agentIdNumber;
+      if (numberOfAgents === 0) {
+        console.error('❌ Aucun agent trouvé dans le groupe sélectionné.');
+        return;
+      }
 
-    // Recherche un autre agent pour target (différent de source)
-    const otherAgent = this.agents.find(agent => agent.id !== sourceId);
-    targetId = otherAgent ? otherAgent.id : sourceId;  // Si pas d'autre agent, target = source
-  }
+      // source = premier agent
+      sourceId = agentsInGroup[0]?.id;
 
-  if (!sourceId) {
-    console.error('❌ Source ID agent manquant ou invalide.');
-    return;
-  }
+      // target = deuxième agent si existant sinon null
+      targetId = agentsInGroup.length > 1 ? agentsInGroup[1].id : null;
 
-  // Si targetId est null ou 0, on le force à sourceId
-  if (!targetId || targetId === 0) {
-    console.warn('⚠️ Target ID non défini ou invalide, on met la source comme cible par défaut.');
-    targetId = sourceId;
-  }
+    } else if (this.selectedAgentId) {
+      const agentIdNumber = Number(this.selectedAgentId);
+      numberOfAgents = 1;
 
-  const profileId = this.selectedTestProfileId ? Number(this.selectedTestProfileId) : null;
-  if (!profileId) {
-    console.error('❌ Profil de test non sélectionné.');
-    return;
-  }
+      sourceId = agentIdNumber;
 
-  const selectedThreshold = this.thresholds.find(t => t.name === this.selectedThreshold);
-  const thresholdId = selectedThreshold ? selectedThreshold.id : 0;
-
-  const newTest = {
-    test_name: name,
-    test_duration: `${durationNumber}s`,
-    number_of_agents: numberOfAgents,
-    creation_date: new Date().toISOString(),
-    agent_group_id: agentGroupId,
-    agent_id: sourceId,
-    test_profile_id: profileId,
-    threshold_name: this.selectedThreshold,
-    threshold_id: thresholdId,
-    inProgress: true,
-    failed: false,
-    completed: false,
-    error : false,
-    
-   test_type: 'planned_test' as 'planned_test',
-    source_id: sourceId,
-    target_id: targetId,
-    profile_id: profileId,
-    result_path: '/results/path',
-    test_status: 'planned',
-    is_periodic: false,
-    interval: 0
-  };
-
-  console.log('✅ Payload envoyé au backend :', newTest);
-
-  this.testService.createTest(newTest).subscribe({
-    next: () => {
-      console.log('✅ Test créé avec succès.');
-      this.refreshPlannedTests();
-      this.cancelWizard();
-    },
-    error: (err) => {
-      console.error('❌ Erreur lors de la création du test :', err);
+      // Recherche un autre agent pour target (différent de source)
+      const otherAgent = this.agents.find(agent => agent.id !== sourceId);
+      targetId = otherAgent ? otherAgent.id : sourceId;  // Si pas d'autre agent, target = source
     }
-  });
-}
 
+    if (!sourceId) {
+      console.error('❌ Source ID agent manquant ou invalide.');
+      return;
+    }
+
+    // Si targetId est null ou 0, on le force à sourceId
+    if (!targetId || targetId === 0) {
+      console.warn('⚠️ Target ID non défini ou invalide, on met la source comme cible par défaut.');
+      targetId = sourceId;
+    }
+
+    const profileId = this.selectedTestProfileId ? Number(this.selectedTestProfileId) : null;
+    if (!profileId) {
+      console.error('❌ Profil de test non sélectionné.');
+      return;
+    }
+
+    const selectedThreshold = this.thresholds.find(t => t.name === this.selectedThreshold);
+    const thresholdId = selectedThreshold ? selectedThreshold.id : 0;
+
+    const newTest = {
+      test_name: name,
+      test_duration: `${durationNumber}s`,
+      number_of_agents: numberOfAgents,
+      creation_date: new Date().toISOString(),
+      agent_group_id: agentGroupId,
+      agent_id: sourceId,
+      test_profile_id: profileId,
+      threshold_name: this.selectedThreshold,
+      threshold_id: thresholdId,
+      inProgress: true,
+      failed: false,
+      completed: false,
+      error : false,
+      test_type: 'planned_test' as 'planned_test',
+      source_id: sourceId,
+      target_id: targetId,
+      profile_id: profileId,
+      result_path: '/results/path',
+      test_status: 'planned',
+      is_periodic: false,
+      interval: 0
+    };
+
+    console.log('✅ Payload envoyé au backend :', newTest);
+
+    this.testService.createTest(newTest).subscribe({
+      next: () => {
+        console.log('✅ Test créé avec succès.');
+        this.refreshPlannedTests();
+        this.cancelWizard();
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors de la création du test :', err);
+      }
+    });
+  }
 
   triggerTestFromUI(test: PlannedTest): void {
     console.log('🟡 triggerTestFromUI appelé avec test:', test);
@@ -282,14 +282,13 @@ createAndAddTest(): void {
     }
 
     this.testService.triggerTest(test.id, 'planned_test').subscribe({
-    next: () => {
-      console.log(`✅ Test déclenché avec succès (ID: ${test.id}, Type: planned_test)`);
-    },
-    error: (err) => {
-      console.error('❌ Erreur lors du déclenchement du test :', err);
-    }
-  });
-
+      next: () => {
+        console.log(`✅ Test déclenché avec succès (ID: ${test.id}, Type: planned_test)`);
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors du déclenchement du test :', err);
+      }
+    });
   }
 
   submitWizard(): void {
@@ -304,9 +303,24 @@ createAndAddTest(): void {
     this.createAndAddTest();
   }
 
+  selectedDetailedTest: PlannedTestInfo | null = null;
+
   onView(row: PlannedTest): void {
+    console.log('Test sélectionné :', row);  // 👈 vérifie ici l'id
+
     this.selectedTest = row;
+    this.selectedDetailedTest = null;
+
+    this.plannedTestService.getPlannedTestById(row.id).subscribe({
+      next: (data: PlannedTestInfo) => {
+        this.selectedDetailedTest = data;
+      },
+      error: (err) => {
+        console.error('Erreur lors de la récupération des détails du test :', err);
+      }
+    });
   }
+
 
   closePopup(): void {
     this.selectedTest = null;

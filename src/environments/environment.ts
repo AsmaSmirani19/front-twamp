@@ -22,5 +22,9 @@ export const environment = {
 
   //healthCheckApiUrl: 'http://localhost:5000/api/health-check'
 
+
+
+
+  plannedTestApiUrl: 'http://localhost:5000/api/planned-test',
 };
 
