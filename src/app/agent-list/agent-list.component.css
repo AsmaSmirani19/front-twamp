@@ -1,0 +1,239 @@
+/* 🌟 Main Content */
+.main-content {
+  padding: 20px;
+  background-color: #F9FAFB;
+}
+
+.custom-add-btn {
+  background-color: white;
+  color: #1976d2; /* bleu type Material */
+  border: 1px solid #1976d2;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-weight: 500;
+  font-size: 16px;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.custom-add-btn:hover {
+  background-color: #e3f2fd;
+  border-color: #1565c0;
+}
+
+/* 🧭 Header */
+.header {
+  padding: 20px;
+  border-bottom: 1px solid #E5E7EB;
+  color: #1F2937;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1F2937;
+  margin-bottom: 20px; /* environ 0.7 cm */
+}
+
+.category {
+  font-size: 1rem;
+  color: #6B7280; /* Texte secondaire */
+}
+
+/* 🔘 Boutons */
+button.btn {
+  font-weight: 500;
+  padding: 0.5rem 1rem; /* py-2 px-4 */
+  background-color: #6366F1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+button.btn:hover {
+  background-color: #4F46E5;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+}
+
+/* 🧩 Popup / Modal */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-box {
+  background: #F9FAFB;
+  padding: 20px 25px;
+  border-radius: 16px;
+  width: 40%;            /* 👈 Réduction de la largeur */
+  max-width: 700px;      /* 👈 Réduction de la largeur maximale */
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); /* shadow-lg */
+  border: 1px solid #E5E7EB;
+}
+
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #E5E7EB;
+  padding-bottom: 10px;
+}
+
+
+
+.popup-header .btn-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  color: #6B7280;
+  transition: transform 0.2s ease;
+}
+
+.popup-header .btn-close:hover {
+  transform: scale(1.1);
+  color: #4F46E5;
+}
+
+.popup-body {
+  padding-top: 1rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.popup-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 30px; /* espace horizontal entre les boutons */
+  margin-top: 20px;
+}
+
+.popup-header .modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 10px;
+}
+
+/* 🧾 Formulaires */
+.form-group label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-group input.form-control {
+  border-radius: 8px;
+  border: 1px solid #D1D5DB;
+  background-color: #F9FAFB;
+  color: #1F2937;
+  padding: 0.5rem;
+}
+
+.form-group input.form-control::placeholder {
+  color: #9CA3AF;
+}
+
+.form-group input.form-control:focus {
+  border-color: #6366F1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+  outline: none;
+}
+
+@media (max-width: 768px) {
+  .popup-footer {
+    justify-content: center;
+    flex-direction: column;
+  }
+}
+
+table.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+
+  thead {
+    background-color: #f1f5f9;
+    th {
+      padding: 12px 15px;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+  }
+
+  tbody {
+    tr {
+      background-color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      td {
+        padding: 12px 15px;
+        color: #374151;
+        vertical-align: middle;
+
+        i.fa {
+          font-size: 16px;
+          cursor: pointer;
+          margin-right: 8px;
+        }
+
+        .tag {
+          display: inline-block;
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .tag-success {
+          background-color: #d1fae5;
+          color: #059669;
+        }
+
+        .tag-warning {
+          background-color: #fef3c7;
+          color: #d97706;
+        }
+
+        .tag-danger {
+          background-color: #fee2e2;
+          color: #dc2626;
+        }
+
+        .fa-circle {
+          font-size: 10px;
+        }
+      }
+    }
+  }
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.fw-medium {
+  font-weight: 500;
+}

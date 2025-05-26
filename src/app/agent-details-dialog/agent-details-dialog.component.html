@@ -1,0 +1,17 @@
+<h2 mat-dialog-title>Group: {{ data.group }}</h2>
+<div mat-dialog-content>
+  <p><strong>Status:</strong> {{ data.status }}</p>
+  <p><strong>Number of agents:</strong> {{ data.numberOfAgents }}</p>
+  <p><strong>Created at:</strong> {{ data.createdAt }}</p>
+
+  <h3>Agents:</h3>
+  <ul>
+    <li *ngFor="let agent of data.agents">
+      <img [src]="agent.avatar" width="40" height="40" style="border-radius: 50%; margin-right: 8px;">
+      <strong>{{ agent.name }}</strong> ({{ agent.role }})
+    </li>
+  </ul>
+</div>
+<div mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Close</button>
+</div>

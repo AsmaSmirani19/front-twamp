@@ -1,0 +1,125 @@
+/* Style pour le tableau des résultats de tests */
+.card {
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  
+  .card-body {
+    padding: 20px;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+
+  thead {
+    background-color: #f1f5f9;
+    
+    th {
+      padding: 12px 15px;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      font-size: 13px;
+      border: none;
+    }
+  }
+
+  tbody {
+    tr {
+      background-color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+      }
+
+      td {
+        padding: 12px 15px;
+        color: #374151;
+        vertical-align: middle;
+        border: none;
+        
+        &:first-child {
+          border-top-left-radius: 8px;
+          border-bottom-left-radius: 8px;
+        }
+        
+        &:last-child {
+          border-top-right-radius: 8px;
+          border-bottom-right-radius: 8px;
+        }
+      }
+    }
+  }
+}
+
+/* Style pour les icônes d'action */
+.fa {
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &.text-info {
+    color: #0ea5e9 !important;
+    
+    &:hover {
+      color: #0284c7 !important;
+    }
+  }
+  
+  &.text-danger {
+    color: #ef4444 !important;
+    
+    &:hover {
+      color: #dc2626 !important;
+    }
+  }
+}
+
+/* Style pour le message quand il n'y a pas de données */
+.text-muted {
+  color: #9ca3af !important;
+  padding: 20px;
+  font-size: 14px;
+}
+
+/* Styles pour les tags de status */
+.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  
+  &-success {
+    background-color: #dcfce7;
+    color: #16a34a;
+  }
+  
+  &-warning {
+    background-color: #fef9c3;
+    color: #ca8a04;
+  }
+  
+  &-danger {
+    background-color: #fee2e2;
+    color: #dc2626;
+  }
+  
+  &-info {
+    background-color: #e0f2fe;
+    color: #0284c7;
+  }
+  
+  &-disabled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+  }
+}

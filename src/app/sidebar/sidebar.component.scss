@@ -1,0 +1,78 @@
+.nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column; /* Disposition en colonne */
+  gap: 15px;  /* Espace entre les éléments */
+  padding-top: 20px; /* Espace en haut du menu */
+}
+
+li {
+  padding: 6px 20px; /* Ajuste l'espace autour des éléments */
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+}
+
+a {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+a i {
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+a p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Suppression de l'effet au survol */
+li:hover {
+  background-color: transparent; /* Pas de changement de couleur au survol */
+}
+
+/* Suppression de la couleur au clic */
+li:active {
+  background-color: transparent; /* Pas de changement de couleur au clic */
+}
+
+li .dropdown-menu {
+  display: none;
+  flex-direction: column;
+  background-color: #34495e;
+  padding: 10px 0;
+  border-radius: 4px;
+  margin-top: 10px;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  width: 200px;
+}
+
+li:hover .dropdown-menu {
+  display: flex;
+}
+
+.notification {
+  background-color: #e74c3c;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.separator {
+  border-top: 1px solid #7f8c8d;
+  margin: 10px 0;
+}
+
+.sidebar-wrapper {
+  background-color: #94949f !important;
+}
