@@ -24,8 +24,8 @@
           <tbody>
             <tr *ngFor="let test of quickTests">
               <td>
-                <span class="control-icon" (click)="toggleControl(test)" style="cursor: pointer;">
-                  <i class="fa" [ngClass]="test.isPaused ? 'fa-pause text-warning' : 'fa-play text-success'"></i>
+                <span class="control-icon" (click)="startTest(test)" style="cursor: pointer;" title="Lancer le test">
+                  <i class="fa fa-play text-success"></i>
                 </span>
               </td>
               <td>{{ test.test_name }}</td>

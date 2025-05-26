@@ -3,23 +3,29 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+  
 export interface TestDto {
-    id?: number;
-    test_name: string;
-    test_duration: string;
-    number_of_agents: number;
-    creation_date: string; 
-  
-    test_type: string;
-    source_id: number;
-    target_id: number;
-    profile_id: number;
-    threshold_id: number;
-    waiting: boolean;
-    failed: boolean;
-    completed: boolean;
-  }
-  
+  id?: number;
+  test_name: string;
+  test_duration: string;
+  number_of_agents: number;
+  creation_date: string;
+
+  isPaused?: boolean;
+
+  test_type: 'quick_test' | 'planned_test';
+  source_id?: number;
+  target_id?: number;
+  profile_id?: number;
+  threshold_id?: number;
+
+  inProgress?: boolean;
+  failed?: boolean;
+  completed?: boolean;
+  error?: boolean;
+}
+
+
 
 @Injectable({
   providedIn: 'root'
@@ -50,11 +56,13 @@ export class TestService {
   }
 
   // lancer le test 
-
-  triggerTest(testId: number): Observable<any> {
-    return this.http.post('http://localhost:5000/api/trigger-test', { test_id: testId });
+  triggerTest(testId: number, testType: string): Observable<any> {
+    return this.http.post('http://localhost:5000/api/trigger-test', {
+      test_id: testId,
+      test_type: testType
+    });
   }
-  
+
   
   
 }

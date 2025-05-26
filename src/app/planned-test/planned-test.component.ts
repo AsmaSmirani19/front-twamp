@@ -33,7 +33,7 @@ export class PlannedTestComponent implements OnInit {
   selectedTest: PlannedTest | null = null;
   showWizard = false;
   wizardStep = 1;
-
+yy
   testPlan = { name: '', duration: '' };
   selectedAgentGroupId: string | null = null;
   selectedAgentId: number | null = null;
@@ -243,10 +243,12 @@ createAndAddTest(): void {
     test_profile_id: profileId,
     threshold_name: this.selectedThreshold,
     threshold_id: thresholdId,
-    waiting: true,
+    inProgress: true,
     failed: false,
     completed: false,
-    test_type: 'planned_test',
+    error : false,
+    
+   test_type: 'planned_test' as 'planned_test',
     source_id: sourceId,
     target_id: targetId,
     profile_id: profileId,
@@ -279,14 +281,15 @@ createAndAddTest(): void {
       return;
     }
 
-    this.testService.triggerTest(test.id).subscribe({
-      next: () => {
-        console.log(`✅ Test déclenché avec succès (ID: ${test.id})`);
-      },
-      error: (err) => {
-        console.error('❌ Erreur lors du déclenchement du test :', err);
-      }
-    });
+    this.testService.triggerTest(test.id, 'planned_test').subscribe({
+    next: () => {
+      console.log(`✅ Test déclenché avec succès (ID: ${test.id}, Type: planned_test)`);
+    },
+    error: (err) => {
+      console.error('❌ Erreur lors du déclenchement du test :', err);
+    }
+  });
+
   }
 
   submitWizard(): void {

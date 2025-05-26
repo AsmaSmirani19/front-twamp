@@ -12,6 +12,7 @@ export const environment = {
   AgentLinkApiUrl : 'http://localhost:5000/api/agent_link',
   testProfileApiUrl: 'http://localhost:5000/api/test-profile',
   thresholdApiUrl: 'http://localhost:5000/api/threshold',
+  
   quickTestApiUrl: 'http://localhost:5000/api/quick-test',
   testsApiUrl: 'http://localhost:5000/api/tests',
   testResultsApiUrl: 'http://localhost:5000/api/test-results',
