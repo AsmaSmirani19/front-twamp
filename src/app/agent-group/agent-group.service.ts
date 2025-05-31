@@ -10,7 +10,8 @@ export interface AgentGroup {
   number_of_agents: number;
   creation_date: string;
   agent_ids?: number[];  // Ajouté pour correspondre au backend
-  agents?: any[];        // Optionnel pour l'affichage
+  agents?: any[];  
+  group_id?: number;        // Optionnel pour l'affichage
 }
 
 @Injectable({

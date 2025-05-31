@@ -15,7 +15,7 @@ export interface Agent {
 @Injectable({
   providedIn: 'root'
 })
-export class AgentService {
+export class AgentServiceg {
   private ApiUrl = environment.ApiUrl; 
   private AgentLinkApiUrl = environment.AgentLinkApiUrl; 
   constructor(private http: HttpClient) {}

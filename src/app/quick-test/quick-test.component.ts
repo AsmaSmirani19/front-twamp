@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { AgentService } from '../agent-list/agent.service';
 import { TestProfileService } from '../test-profile/test-profile.service';
 import { ThresholdService } from '../threshold/threshold.service';
-import { QuickTestService } from './quick-test.service';
 import { TestService, TestDto } from '../services/test.services';
 
 @Component({
@@ -17,11 +17,12 @@ export class QuickTestComponent implements OnInit {
   thresholds: any[] = [];
   quickTests: TestDto[] = [];
   showQuickPopup = false;
+  notification: string | null = null;
 
   testForm = {
     name: '',
-    duration: 0,
-    nbTests: 0,
+    duration: null as number | null,
+    nbTests: 1,
     agentSource: '',
     agentDestination: '',
     qosProfile: '',
@@ -32,7 +33,6 @@ export class QuickTestComponent implements OnInit {
     private agentService: AgentService,
     private testProfileService: TestProfileService,
     private thresholdService: ThresholdService,
-    private quickTestService: QuickTestService,
     private testService: TestService
   ) {}
 
@@ -45,93 +45,76 @@ export class QuickTestComponent implements OnInit {
 
   loadAgents(): void {
     this.agentService.getAgents().subscribe({
-      next: (data) => {
-        this.agents = data;
-        console.log("✅ Agents chargés :", this.agents);
-      },
-      error: (err) => console.error("❌ Erreur agents :", err)
+      next: data => this.agents = data,
+      error: err => console.error("Erreur chargement agents :", err)
     });
   }
 
   loadTestProfiles(): void {
     this.testProfileService.getTestProfiles().subscribe({
-      next: (profiles) => {
-        this.testProfiles = profiles;
-        console.log("✅ Profils chargés :", this.testProfiles);
-      },
-      error: (err) => console.error('❌ Erreur profils :', err)
+      next: profiles => this.testProfiles = profiles,
+      error: err => console.error("Erreur chargement profils :", err)
     });
   }
 
   loadThresholds(): void {
     this.thresholdService.getThresholds().subscribe({
-      next: (thresholds) => {
-        this.thresholds = thresholds;
-        console.log("✅ Thresholds chargés :", this.thresholds);
-      },
-      error: (err) => console.error('❌ Erreur thresholds :', err)
+      next: thresholds => this.thresholds = thresholds,
+      error: err => console.error("Erreur chargement thresholds :", err)
     });
   }
 
   loadQuickTests(): void {
     this.testService.getTests().subscribe({
-      next: (tests) => {
+      next: tests => {
         this.quickTests = tests
           .filter(t => t.test_type === "quick_test")
-          .map(t => ({ ...t, isPaused: false })); // Ajout isPaused localement
+          .map(t => ({ ...t, isPaused: false }));
       },
-      error: (err) => console.error('❌ Erreur quick tests :', err)
+      error: err => console.error("Erreur chargement quick tests :", err)
     });
   }
 
-  formatDuration(duration: string): string {
-    if (!duration) return 'Non défini';
-    return duration.replace('s', ' sec');
+ startTest(test: TestDto): void {
+  if (!test.id || test.id === 0) {
+    this.notification = "ID de test invalide, impossible de lancer le test.";
+    return;
   }
-
-  startTest(test: TestDto): void {
   this.testService.triggerTest(test.id, test.test_type).subscribe({
-    next: () => alert(`🚀 Test "${test.test_name}" lancé avec succès !`),
-    error: (err) => alert(`❌ Erreur lors du lancement du test : ${err.message}`)
+    next: () => {
+      this.notification = `Test "${test.test_name}" lancé avec succès !`;
+      this.closeQuickTestPopup(); // fermer la popup après succès
+      this.loadQuickTests();      // recharger la liste des tests
+    },
+    error: err => this.notification = `Erreur lors du lancement : ${err.message}`
   });
 }
 
- toggleControl(test: TestDto & { isPaused?: boolean }): void {
-  test.isPaused = !test.isPaused;
-  console.log(`Test "${test.test_name}" ${test.isPaused ? 'en pause' : 'repris'}`);
-  // this.testService.togglePause(test.id, test.isPaused).subscribe(...) (à implémenter côté backend)
-}
-
-
-  onDeleteTest(testId: number): void {
-    this.testService.deleteTest(testId).subscribe({
-      next: () => {
-        console.log('✅ Test supprimé avec succès.');
-        this.loadQuickTests();
-      },
-      error: (err) => {
-        console.error('❌ Erreur lors de la suppression du test :', err);
-      }
-    });
-  }
-
-  openQuickTestPopup(): void {
-    this.showQuickPopup = true;
-  }
-
-  closeQuickTestPopup(): void {
-    this.showQuickPopup = false;
-  }
 
   launchQuickTest(): void {
+    const { name, duration, agentSource, agentDestination, nbTests, qosProfile, threshold } = this.testForm;
+
+    if (!name || name.trim() === '') {
+      this.notification = "Le nom du test est requis";
+      return;
+    }
+    if (duration === null || isNaN(duration) || duration <= 0) {
+      this.notification = "La durée doit être un nombre supérieur à 0";
+      return;
+    }
+    if (!agentSource || !agentDestination) {
+      this.notification = "Les agents source et destination sont obligatoires";
+      return;
+    }
+    console.log('agentDestination value:', agentDestination, 'typeof:', typeof agentDestination);
     const payload: TestDto = {
-      test_name: this.testForm.name,
-      test_duration: `${this.testForm.duration}s`,
-      number_of_agents: this.testForm.nbTests,
-      source_id: +this.testForm.agentSource,
-      target_id: +this.testForm.agentDestination,
-      profile_id: +this.testForm.qosProfile,
-      threshold_id: +this.testForm.threshold,
+      test_name: name.trim(),
+      test_duration: `${duration}s`,
+      number_of_agents: nbTests,
+      source_id: parseInt(agentSource, 10),
+      target_id:Number.isNaN(parseInt(agentDestination, 10)) ? undefined : parseInt(agentDestination, 10),
+      profile_id: qosProfile ? parseInt(qosProfile, 10) : undefined,
+      threshold_id: threshold ? parseInt(threshold, 10) : undefined,
       creation_date: new Date().toISOString(),
       test_type: "quick_test",
       inProgress: true,
@@ -139,30 +122,70 @@ export class QuickTestComponent implements OnInit {
       completed: false,
       error: false
     };
-
+    console.log('Payload envoyé au backend :', payload);
     this.testService.createTest(payload).subscribe({
       next: (createdTest) => {
-        alert('✅ Test enregistré avec succès dans la base de données');
-        // Lancer le test immédiatement après création
-        this.testService.triggerTest(createdTest.id, "quick_test").subscribe({
-          next: () => {
-            alert('🚀 Test lancé avec succès !');
-            this.closeQuickTestPopup();
-            this.loadQuickTests();
-          },
-          error: (err) => {
-            alert('❌ Erreur lors du lancement du test : ' + err.message);
-          }
-        });
+        const testId = createdTest?.id ?? createdTest?.data?.id;
+        if (testId && testId > 0) {
+          this.testService.triggerTest(testId, "quick_test").subscribe({
+            next: () => {
+              this.notification = 'Test lancé avec succès !';
+              this.loadQuickTests();
+              this.closeQuickTestPopup();
+            },
+            error: err => {
+              console.error(err);
+              this.notification = 'Erreur lors du lancement : ' + err.message;
+            }
+          });
+        } else {
+          this.notification = "ID du test créé invalide";
+        }
       },
-      error: (err) => alert('❌ Erreur lors de l’enregistrement : ' + err.message)
+      error: err => {
+        console.error(err);
+        this.notification = 'Erreur lors de la création : ' + err.message;
+      }
     });
   }
 
-  onSubmit(form: any): void {
-    if (form.invalid) return;
-    console.log('Détails du test soumis :', this.testForm);
-    this.launchQuickTest();
+  onSubmit(form: NgForm): void {
+  console.log('onSubmit called', form.valid, form.value);
+  if (form.invalid) {
+    this.notification = "Formulaire invalide";
+    return;
+  }
+  this.launchQuickTest();
+ }
+
+
+
+  openQuickTestPopup(): void {
+    this.showQuickPopup = true;
   }
 
+  closeQuickTestPopup(): void {
+    console.log('closeQuickTestPopup called');  
+    this.showQuickPopup = false;
+    this.notification = '';
+    this.testForm = {
+      name: '',
+      duration: null,
+      nbTests: 1,
+      agentSource: '',
+      agentDestination: '',
+      qosProfile: '',
+      threshold: ''
+    };
+  }
+
+  formatDuration(duration: string): string {
+    if (!duration || typeof duration !== 'string') return '-';
+    const cleaned = duration.trim().replace(/[^0-9]/g, '');
+    const seconds = parseInt(cleaned, 10);
+    if (isNaN(seconds)) return '-';
+    return seconds >= 60
+      ? `${Math.floor(seconds / 60)}m ${seconds % 60}s`
+      : `${seconds}s`;
+  }
 }

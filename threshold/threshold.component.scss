@@ -1,22 +1,50 @@
 .popup-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1050;
-  }
-  
-  .popup-card {
-    background: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    width: 600px;
-    max-width: 95%;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+  padding: 20px; /* Ajout de padding pour les petits écrans */
+}
+
+.popup-card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  width: 700px; /* Largeur augmentée */
+  max-width: 95%;
+  max-height: 90vh; /* Hauteur maximale */
+  overflow-y: auto; /* Scroll si contenu trop long */
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.popup-card h5 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+}
+
+.popup-card .form-control {
+  font-size: 0.9rem;
+  padding: 8px 12px;
+}
+
+.popup-card table {
+  font-size: 0.9rem;
+}
+
+.popup-card table th {
+  background-color: #f8f9fa;
+  font-weight: 500;
+}
+
+.popup-card .btn {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}

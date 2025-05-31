@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AgentGroupService, AgentGroup } from './agent-group.service';
-import { Agent, AgentService } from './agent.service';
+import { Agent, AgentServiceg } from './agentg.service';
 
 @Component({
   selector: 'app-agent-group',
@@ -33,7 +33,7 @@ export class AgentGroupComponent implements OnInit {
 
   constructor(
     private agentGroupService: AgentGroupService,
-    private agentService: AgentService
+    private agentServiceg: AgentServiceg
   ) {}
 
   ngOnInit(): void {
@@ -58,7 +58,7 @@ export class AgentGroupComponent implements OnInit {
 
   // 📦 Chargement des agents
   loadAgents(): void {
-    this.agentService.getAgents().subscribe({
+    this.agentServiceg.getAgents().subscribe({
       next: (data) => {
         this.availableAgents = data;
         this.filteredAgents = [...data];
@@ -131,7 +131,7 @@ export class AgentGroupComponent implements OnInit {
           agent_ids: this.newGroup.agents.map(agent => agent.id)
         };
         console.log('🔗 Envoi liaison agents:', linkPayload);
-        this.agentService.linkAgentsToGroup(linkPayload).subscribe({
+        this.agentServiceg.linkAgentsToGroup(linkPayload).subscribe({
           next: () => {
             console.log('✅ Agents liés avec succès');
             this.closeNewGroupPopup();
@@ -154,7 +154,7 @@ export class AgentGroupComponent implements OnInit {
   onView(group: AgentGroup): void {
     if (!group.id) return;
 
-    this.agentService.getAgentsByGroup(group.id).subscribe({
+    this.agentServiceg.getAgentsByGroup(group.id).subscribe({
       next: (agents) => {
         this.selectedGroup = { ...group, agents };
         this.viewGroupPopupVisible = true;
@@ -208,7 +208,7 @@ export class AgentGroupComponent implements OnInit {
   addAgent(agent: Agent): void {
     if (!this.selectedGroup) return;
 
-    this.agentService.addAgentToGroup(this.selectedGroup.id!, agent.id!).subscribe({
+    this.agentServiceg.addAgentToGroup(this.selectedGroup.id!, agent.id!).subscribe({
       next: () => {
         this.selectedGroup?.agents.push(agent);
       },
@@ -223,7 +223,7 @@ export class AgentGroupComponent implements OnInit {
   removeAgent(agent: Agent): void {
     if (!this.selectedGroup) return;
 
-    this.agentService.removeAgentFromGroup(this.selectedGroup.id!, agent.id!).subscribe({
+    this.agentServiceg.removeAgentFromGroup(this.selectedGroup.id!, agent.id!).subscribe({
       next: () => {
         this.selectedGroup!.agents = this.selectedGroup!.agents.filter(a => a.id !== agent.id);
       },

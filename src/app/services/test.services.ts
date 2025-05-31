@@ -55,13 +55,21 @@ export class TestService {
     return this.http.delete(`${this.apiUrl}?id=${id}`);
   }
 
-  // lancer le test 
-  triggerTest(testId: number, testType: string): Observable<any> {
-    return this.http.post('http://localhost:5000/api/trigger-test', {
-      test_id: testId,
-      test_type: testType
-    });
+  triggerTest(testId: number, testType: string, targetIds?: number[]): Observable<any> {
+  const payload: any = {
+    test_id: testId,
+    test_type: testType
+  };
+
+  if (targetIds && targetIds.length > 0) {
+    payload.target_ids = targetIds;
   }
+
+  return this.http.post('http://localhost:5000/api/trigger-test', payload);
+}
+
+
+  
 
   
   

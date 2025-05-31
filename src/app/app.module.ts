@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 
+
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 
@@ -16,9 +17,6 @@ import { AppComponent } from './app.component';
 import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
 import { AgentDetailsDialogComponent } from './agent-details-dialog/agent-details-dialog.component';
 
-import { TestProfileComponent } from './test-profile/test-profile.component';
-
-
 @NgModule({
   imports: [
     BrowserAnimationsModule,
@@ -30,12 +28,14 @@ import { TestProfileComponent } from './test-profile/test-profile.component';
     SidebarModule,
     AppRoutingModule,
     MatDialogModule,
-    MatButtonModule
+    MatButtonModule,
+
   ],
   declarations: [
     AppComponent,
     AdminLayoutComponent,
-    AgentDetailsDialogComponent,
+    AgentDetailsDialogComponent
+    // ❌ Supprimé ici aussi : TestProfileComponent
   ],
   providers: [],
   bootstrap: [AppComponent]

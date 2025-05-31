@@ -1,8 +1,8 @@
 <div class="main-content">
   <div class="container-fluid">
 
-    <!-- Header avec bouton -->
-    <div class="d-flex justify-content-between align-items-center mb-3" style="margin-bottom: 0.7cm;">
+    <!-- Bouton "New Quick Test" -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
       <button class="custom-add-btn" (click)="openQuickTestPopup()">
         <span class="me-1">+</span> New Quick Test
       </button>
@@ -11,7 +11,7 @@
     <!-- Tableau des Quick Tests -->
     <div class="card mt-4">
       <div class="card-body table-responsive">
-        <table class="table table-hover" *ngIf="quickTests && quickTests.length > 0">
+        <table class="table table-hover" *ngIf="quickTests?.length > 0">
           <thead>
             <tr>
               <th>Control</th>
@@ -24,7 +24,7 @@
           <tbody>
             <tr *ngFor="let test of quickTests">
               <td>
-                <span class="control-icon" (click)="startTest(test)" style="cursor: pointer;" title="Lancer le test">
+                <span class="control-icon" (click)="startTest(test)" title="Lancer le test" style="cursor: pointer;">
                   <i class="fa fa-play text-success"></i>
                 </span>
               </td>
@@ -32,13 +32,13 @@
               <td>{{ formatDuration(test.test_duration) }}</td>
               <td>{{ test.creation_date | date: 'short' }}</td>
               <td>
-                <i class="fa fa-eye text-info me-2" (click)="viewTest(test)" style="cursor:pointer;"></i>
-                <i class="fa fa-trash text-danger" (click)="onDeleteTest(test.id)" style="cursor:pointer;"></i>
+                <i class="fa fa-eye text-info me-2" (click)="viewTest(test)" style="cursor: pointer;"></i>
+                <i class="fa fa-trash text-danger" (click)="onDeleteTest(test.id)" style="cursor: pointer;"></i>
               </td>
             </tr>
           </tbody>
         </table>
-        <div *ngIf="!quickTests || quickTests.length === 0" class="text-center text-muted">
+        <div *ngIf="!quickTests?.length" class="text-center text-muted">
           No quick tests found.
         </div>
       </div>
@@ -47,60 +47,131 @@
   </div>
 </div>
 
-
-<!-- POPUP CENTRÉE -->
+<!-- POPUP de création -->
 <div *ngIf="showQuickPopup" class="popup-overlay">
   <div class="popup-content">
     <div class="popup-header d-flex justify-content-between align-items-center mb-3">
       <h5>Launch Quick Test</h5>
-      <button class="btn-close" (click)="closeQuickTestPopup()">×</button>
+      <button type="button" class="btn-close" aria-label="Close" (click)="closeQuickTestPopup()">×</button>
     </div>
 
-    <form (ngSubmit)="launchQuickTest()" #form="ngForm">
+  
+    <form (submit)="onSubmit(form)" #form="ngForm">
 
       <div class="form-group mb-3">
         <label for="testName">Test Name</label>
-        <input type="text" id="testName" name="testName" class="form-control" [(ngModel)]="testForm.name" required />
+        <input
+          type="text"
+          id="testName"
+          name="testName"
+          class="form-control"
+          [(ngModel)]="testForm.name"
+          #testName="ngModel"
+          required
+        />
+        <div *ngIf="form.submitted && testName.invalid" class="text-danger mt-1">
+          Le nom du test est requis.
+        </div>
       </div>
 
       <div class="form-group mb-3">
         <label for="agentSource">Agent Source</label>
-        <select id="agentSource" name="agentSource" class="form-control" [(ngModel)]="testForm.agentSource" required>
+        <select
+          id="agentSource"
+          name="agentSource"
+          class="form-control"
+          [(ngModel)]="testForm.agentSource"
+          #agentSource="ngModel"
+          required
+        >
           <option value="" disabled>Select Agent Source</option>
           <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
         </select>
+        <div *ngIf="form.submitted && agentSource.invalid" class="text-danger mt-1">
+          Veuillez sélectionner un agent source.
+        </div>
       </div>
 
       <div class="form-group mb-3">
         <label for="agentDestination">Agent Destination</label>
-        <select id="agentDestination" name="agentDestination" class="form-control" [(ngModel)]="testForm.agentDestination" required>
+        <select
+          id="agentDestination"
+          name="agentDestination"
+          class="form-control"
+          [(ngModel)]="testForm.agentDestination"
+          #agentDestination="ngModel"
+          required
+        >
           <option value="" disabled>Select Agent Destination</option>
           <option *ngFor="let agent of agents" [value]="agent.id">{{ agent.name }}</option>
         </select>
+        <div *ngIf="form.submitted && agentDestination.invalid" class="text-danger mt-1">
+          Veuillez sélectionner un agent destination.
+        </div>
       </div>
 
       <div class="form-group mb-3">
         <label for="duration">Test Duration (seconds)</label>
-        <input type="number" id="duration" name="duration" class="form-control" [(ngModel)]="testForm.duration" min="1" required>
+        <input
+          type="number"
+          id="duration"
+          name="duration"
+          class="form-control"
+          [(ngModel)]="testForm.duration"
+          #duration="ngModel"
+          required
+          min="1"
+        />
+        <div *ngIf="form.submitted && (duration.invalid || testForm.duration <= 0)" class="text-danger mt-1">
+          La durée doit être un nombre supérieur à 0.
+        </div>
       </div>
 
       <div class="form-group mb-3">
         <label for="qosProfile">QoS Profile</label>
-        <select id="qosProfile" name="qosProfile" class="form-control" [(ngModel)]="testForm.qosProfile" required>
+        <select
+          id="qosProfile"
+          name="qosProfile"
+          class="form-control"
+          [(ngModel)]="testForm.qosProfile"
+          #qosProfile="ngModel"
+          required
+        >
           <option value="" disabled>Select QoS Profile</option>
-          <option *ngFor="let profile of testProfiles" [value]="profile.id">{{ profile.profile_name }}</option>
+          <option *ngFor="let profile of testProfiles" [value]="profile.id">
+            {{ profile.profile_name }}
+          </option>
         </select>
+        <div *ngIf="form.submitted && qosProfile.invalid" class="text-danger mt-1">
+          Veuillez sélectionner un profil QoS.
+        </div>
       </div>
 
       <div class="form-group mb-3">
-        <label for="threshold" aria-label="Threshold">Threshold</label>
-        <select id="threshold" name="threshold" class="form-control" [(ngModel)]="testForm.threshold_id" required aria-label="Select Threshold">
+        <label for="threshold">Threshold</label>
+        <select
+          id="threshold"
+          name="threshold"
+          class="form-control"
+          [(ngModel)]="testForm.threshold"
+          #threshold="ngModel"
+          required
+        >
           <option value="" disabled>Select Threshold</option>
-          <option *ngFor="let threshold of thresholds" [value]="threshold.id">{{ threshold.name }}</option>
+          <option *ngFor="let threshold of thresholds" [value]="threshold.id">
+            {{ threshold.name }}
+          </option>
         </select>
+        <div *ngIf="form.submitted && threshold.invalid" class="text-danger mt-1">
+          Veuillez sélectionner un seuil.
+        </div>
       </div>
 
-      <button type="submit" class="btn btn-primary w-100" [disabled]="form.invalid">Launch Test</button>
+      <button type="submit" (click)="onSubmit(form)" class="btn btn-primary w-100">
+        Create Test
+      </button>
+
     </form>
   </div>
 </div>
+
