@@ -26,5 +26,7 @@ export const environment = {
 
 
   plannedTestApiUrl: 'http://localhost:5000/api/planned-test',
+  testResultsByIdApiUrl: 'http://localhost:5000/api/test-results_id'
+
 };
 

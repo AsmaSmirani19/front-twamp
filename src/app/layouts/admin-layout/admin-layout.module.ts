@@ -22,6 +22,8 @@ import { TypographyComponent } from '../../typography/typography.component';
 import { IconsComponent } from '../../icons/icons.component';
 import { MapsComponent } from '../../maps/maps.component';
 import { NotificationsComponent } from '../../notifications/notifications.component';
+import { NgChartsModule } from 'ng2-charts';
+
 
 
 
@@ -32,8 +34,9 @@ import { NotificationsComponent } from '../../notifications/notifications.compon
     RouterModule.forChild(AdminLayoutRoutes),
     FormsModule,
     LbdModule,
-    
+    NgChartsModule,
     NguiMapModule.forRoot({apiUrl: 'https://maps.google.com/maps/api/js?key=YOUR_KEY_HERE'})
+     
   ],
   declarations: [
     HomeComponent,

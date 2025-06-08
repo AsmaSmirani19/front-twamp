@@ -114,7 +114,6 @@ export class TestProfileComponent implements OnInit {
       });
     }
   }
-
   // À implémenter selon besoin
   onEdit(profile: TestProfile): void {
     console.log('Édition du profil:', profile);

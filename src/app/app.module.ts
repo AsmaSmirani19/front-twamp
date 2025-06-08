@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 
-
+import { NgChartsModule } from 'ng2-charts';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 
@@ -29,13 +29,13 @@ import { AgentDetailsDialogComponent } from './agent-details-dialog/agent-detail
     AppRoutingModule,
     MatDialogModule,
     MatButtonModule,
+    NgChartsModule, 
 
   ],
   declarations: [
     AppComponent,
     AdminLayoutComponent,
     AgentDetailsDialogComponent
-    // ❌ Supprimé ici aussi : TestProfileComponent
   ],
   providers: [],
   bootstrap: [AppComponent]

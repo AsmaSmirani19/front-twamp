@@ -16,6 +16,10 @@ import { AppComponent } from './app.component';
 import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
 import { AgentDetailsDialogComponent } from './agent-details-dialog/agent-details-dialog.component';
 
+import { NgChartsModule } from 'ng2-charts';
+
+
+
 
 
 @NgModule({
@@ -29,7 +33,9 @@ import { AgentDetailsDialogComponent } from './agent-details-dialog/agent-detail
     SidebarModule,
     AppRoutingModule,
     MatDialogModule,
-    MatButtonModule
+    MatButtonModule,
+     NgChartsModule,
+
   ],
   declarations: [
     AppComponent,

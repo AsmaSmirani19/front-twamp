@@ -37,26 +37,116 @@
   </div>
 </div>
 
+
 <!-- Popup styled like Pinterest -->
 <div class="pinterest-popup-overlay" *ngIf="selectedResult">
   <div class="pinterest-popup-card">
+    
+    <!-- Header -->
     <div class="popup-header">
       <h4>{{ selectedResult.testName }}</h4>
-      <button class="close-btn" (click)="closePopup()">×</button>
+      <button class="close-btn" aria-label="Close" (click)="closePopup()">&times;</button>
     </div>
-    <div class="popup-body">
-      <p><strong>Status:</strong> {{ selectedResult.status }}</p>
-      <p><strong>Creation Date:</strong> {{ selectedResult.creationDate | date:'short' }}</p>
-      <p><strong>Duration:</strong> {{ selectedResult.testDuration }}</p>
-      <p><strong>Source Agent:</strong> {{ selectedResult.sourceAgent }}</p>
-      <p><strong>Target Agent:</strong> {{ selectedResult.targetAgent }}</p>
 
-      <p *ngIf="selectedResult.minValue !== undefined"><strong>Min Value:</strong> {{ selectedResult.minValue }}</p>
-      <p *ngIf="selectedResult.maxValue !== undefined"><strong>Max Value:</strong> {{ selectedResult.maxValue }}</p>
-      <p *ngIf="selectedResult.avgValue !== undefined"><strong>Avg Value:</strong> {{ selectedResult.avgValue }}</p>
-      <p *ngIf="selectedResult.successRate !== undefined"><strong>Success Rate:</strong> {{ selectedResult.successRate }}</p>
-      <p *ngIf="selectedResult.thresholdName !== undefined"><strong>Threshold Name:</strong> {{ selectedResult.thresholdName }}</p>
-      <p *ngIf="selectedResult.thresholdValue !== undefined"><strong>Threshold Value:</strong> {{ selectedResult.thresholdValue }}</p>
+    <!-- Body -->
+    <div class="popup-body">
+      
+      <!-- Test Info -->
+      <div class="test-info">
+        <p><strong>Status:</strong>
+          <span [ngClass]="getStatusClass(selectedResult.status)">
+            {{ selectedResult.status }}
+          </span>
+        </p>
+        <p><strong>Creation Date:</strong> {{ selectedResult.creationDate | date: 'medium' }}</p>
+        <p><strong>Duration:</strong> {{ selectedResult.testDuration }}</p>
+        <p><strong>Source Agent:</strong> {{ selectedResult.sourceAgent }}</p>
+        <p><strong>Target Agent:</strong> {{ selectedResult.targetAgent }}</p>
+      </div>
+
+      <!-- Metric Tabs -->
+      <div class="metric-tabs">
+        <button 
+          *ngFor="let metric of ['latency', 'jitter', 'throughput']"
+          [ngClass]="{ 'active': selectedMetric === metric }"
+          (click)="switchMetric(metric)">
+          {{ metric | titlecase }}
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" *ngIf="selectedResult.minValue !== undefined">
+        <div class="stat-item">
+          <span class="stat-label">Min Value:</span>
+          <span class="stat-value">{{ selectedResult.minValue }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Max Value:</span>
+          <span class="stat-value">{{ selectedResult.maxValue }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Avg Value:</span>
+          <span class="stat-value">{{ selectedResult.avgValue }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Success Rate:</span>
+          <span class="stat-value">{{ selectedResult.successRate }}%</span>
+        </div>
+      </div>
+
+    <!-- Charts -->
+  <div class="chart-wrapper">
+
+    <!-- Latency Chart -->
+    <ng-container *ngIf="selectedMetric === 'latency'">
+      <div class="chart-container" style="min-height:300px;">
+        <canvas *ngIf="hasValidChartData(latencyChart); else noLatency"
+                baseChart
+                latencyChartRef="baseChart"
+                [data]="latencyChart"
+                [options]="chartOptions"
+                [type]="'line'">
+        </canvas>
+        <ng-template #noLatency>
+          <div class="no-data-message">No latency data available</div>
+        </ng-template>
+      </div>
+    </ng-container>
+
+    <!-- Jitter Chart -->
+    <ng-container *ngIf="selectedMetric === 'jitter'">
+      <div class="chart-container" style="min-height:300px;">
+        <canvas *ngIf="hasValidChartData(jitterChart); else noJitter"
+                baseChart
+                jitterChartRef="baseChart"
+                [data]="jitterChart"
+                [options]="chartOptions"
+                [type]="'line'">
+        </canvas>
+        <ng-template #noJitter>
+          <div class="no-data-message">No jitter data available</div>
+        </ng-template>
+      </div>
+    </ng-container>
+
+    <!-- Throughput Chart -->
+    <ng-container *ngIf="selectedMetric === 'throughput'">
+      <div class="chart-container" style="min-height:300px;">
+        <canvas *ngIf="hasValidChartData(throughputChart); else noThroughput"
+                baseChart
+                throughputChartRef="baseChart"
+                [data]="throughputChart"
+                [options]="chartOptions"
+                [type]="'line'">
+        </canvas>
+        <ng-template #noThroughput>
+          <div class="no-data-message">No throughput data available</div>
+        </ng-template>
+      </div>
+    </ng-container>
+
+  </div>
+
     </div>
   </div>
 </div>
