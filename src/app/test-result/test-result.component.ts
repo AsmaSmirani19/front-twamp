@@ -11,6 +11,16 @@ import { BaseChartDirective } from 'ng2-charts';
 import { WebSocketService, TestStatus } from './web-socket.service';
 import { TestService } from './test.service';
 import { TestResult } from './test-result.model';
+import {
+  Chart,
+  registerables
+} from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+// Enregistre tous les composants nécessaires (axes, légendes, etc.)
+Chart.register(...registerables, annotationPlugin);
+
+
 
 type AllowedStatus = 'error' | 'unknown' | 'in_progress' | 'completed' | 'failed';
 
@@ -33,6 +43,7 @@ export interface AttemptResult {
   styleUrls: ['./test-result.component.scss']
 })
 
+
 export class TestResultComponent implements OnInit, OnDestroy {
 
   
@@ -43,6 +54,7 @@ export class TestResultComponent implements OnInit, OnDestroy {
   @ViewChild('latencyChartRef', { static: false, read: BaseChartDirective }) latencyChartRef?: BaseChartDirective;
   @ViewChild('jitterChartRef', { static: false, read: BaseChartDirective }) jitterChartRef?: BaseChartDirective;
   @ViewChild('throughputChartRef', { static: false, read: BaseChartDirective }) throughputChartRef?: BaseChartDirective;
+  @ViewChild('chart') chart: any;
 
 
   selectedMetric: string = 'latency';
@@ -53,9 +65,9 @@ export class TestResultComponent implements OnInit, OnDestroy {
   throughputChart: ChartData<'line'> = { labels: [], datasets: [] };
 
 
-  chartOptions: ChartOptions<'line'> = {
+chartOptions: ChartOptions<'line'> = {
   responsive: true,
- maintainAspectRatio: false,
+  maintainAspectRatio: false,
   elements: {
     line: { tension: 0.3 },
     point: { radius: 3, hoverRadius: 5 }
@@ -83,6 +95,26 @@ export class TestResultComponent implements OnInit, OnDestroy {
           return label;
         }
       }
+    },
+    annotation: {
+      annotations: {
+        thresholdLine: {
+          type: 'line',
+          yMin: this.selectedResult?.thresholdValue ?? 3,  // valeur dynamique du seuil
+          yMax: this.selectedResult?.thresholdValue ?? 3,
+          borderColor: 'red',
+          borderWidth: 2,
+          label: {
+            content: `Seuil = ${this.selectedResult?.thresholdValue ?? 3}`,
+            enabled: true,
+            position: 'center',
+            color: 'red',
+            font: {
+              weight: 'bold'
+            }
+          }
+        }
+      }
     }
   },
   scales: {
@@ -99,6 +131,7 @@ export class TestResultComponent implements OnInit, OnDestroy {
     }
   }
 };
+
 
   private wsSubscription?: Subscription;
 
@@ -141,25 +174,44 @@ export class TestResultComponent implements OnInit, OnDestroy {
     this.wsSubscription?.unsubscribe();
   }
 
-  private refreshTestFromBackend(testId: number): void {
-    if (!testId || testId <= 0) return;
+private refreshTestFromBackend(testId: number): void {
+  console.log('[CALL] refreshTestFromBackend appelé pour testId:', testId);
+  if (!testId || testId <= 0) return;
 
-    this.testService.getTestResultDetails(testId).subscribe({
-      next: (details: TestResult) => {
-        const index = this.testResults.findIndex(t => t.test_id === testId);
-        if (index !== -1) {
-          this.testResults[index] = { ...this.testResults[index], ...details };
-        } else {
-          this.testResults.push(details);
-        }
-        this.testResults = [...this.testResults];
-      },
-      error: (error) => {
-        console.error(`Erreur chargement détails test ${testId}`, error);
+  this.testService.getTestResultDetails(testId).subscribe({
+    next: (details: TestResult) => {
+      console.log('✅ Données reçues de l’API (raw):', JSON.stringify(details, null, 2));
+      console.log('🔎 thresholdName:', details.thresholdName);
+      console.log('🔎 thresholdValue:', details.thresholdValue);
+
+      const index = this.testResults.findIndex(t => t.test_id === testId);
+      if (index !== -1) {
+        this.testResults[index] = { ...this.testResults[index], ...details };
+      } else {
+        this.testResults.push(details);
       }
-    });
-  }
-  
+
+      this.testResults = [...this.testResults];
+
+      this.selectedResult = details;
+      console.log('📋 selectedResult final:', JSON.stringify(this.selectedResult, null, 2));
+
+      // Mise à jour dynamique de la config chartOptions avec la nouvelle valeur de seuil
+      this.chartOptions = this.getChartOptions(this.selectedResult.thresholdValue);
+
+      // Forcer la mise à jour du graphique après un court délai pour laisser Angular appliquer les changements
+      setTimeout(() => {
+        this.chart?.update();
+      }, 0);
+    },
+    error: (error) => {
+      console.error(`Erreur chargement détails test ${testId}`, error);
+    }
+  });
+}
+
+
+
  switchMetric(metric: string): void {
   this.selectedMetric = metric;
 
@@ -177,8 +229,11 @@ export class TestResultComponent implements OnInit, OnDestroy {
     console.log('[onView] Selected TestResult ID:', testId);
 
     this.clearChartsData();
+   
     this.selectedResult = result;
+    this.refreshTestFromBackend(testId); // ← AJOUTER CETTE LIGNE
     this.cdr.detectChanges();
+
 
     this.testService.getAttemptResults(testId).subscribe({
       next: (data: AttemptResult[]) => {
@@ -426,13 +481,118 @@ ngAfterViewInit() {
     });
   }
 
+private updateThresholdLine(threshold: number): void {
+  if (!this.chartOptions.plugins?.annotation?.annotations) {
+    this.chartOptions.plugins = {
+      ...this.chartOptions.plugins,
+      annotation: {
+        annotations: {}
+      }
+    };
+  }
+
+  this.chartOptions.plugins.annotation.annotations['thresholdLine'] = {
+    type: 'line',
+    yMin: threshold,
+    yMax: threshold,
+    borderColor: 'red',
+    borderWidth: 2,
+    label: {
+      content: `Seuil = ${threshold}`,
+      enabled: true,
+      position: 'end',
+      color: 'red'
+    }
+  };
+
+  this.chart?.update(); // Redessine la courbe avec la nouvelle ligne
+}
+getChartOptions(thresholdValue: number | undefined): ChartOptions<'line'> {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    elements: {
+      line: { tension: 0.3 },
+      point: { radius: 3, hoverRadius: 5 }
+    },
+    plugins: {
+      legend: { display: true, position: 'top' },
+      tooltip: {
+        enabled: true,
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          label: (context) => {
+            let label = context.dataset.label || '';
+            if (label) label += ': ';
+            if (context.parsed.y !== null) {
+              const value = context.parsed.y;
+              if (label.includes('Throughput')) {
+                label += value > 100 ? `${value.toFixed(2)} Mbps` : `${value.toFixed(4)} Mbps`;
+              } else if (label.includes('Latency') || label.includes('Jitter')) {
+                label += value.toFixed(4) + ' ms';
+              } else {
+                label += value.toFixed(2);
+              }
+            }
+            return label;
+          }
+        }
+      },
+      annotation: {
+        annotations: {
+          thresholdLine: {
+            type: 'line',
+            yMin: thresholdValue ?? 3,
+            yMax: thresholdValue ?? 3,
+            borderColor: 'red',
+            borderWidth: 2,
+            label: {
+              content: `Seuil = ${thresholdValue ?? 3}`,
+              enabled: true,
+              position: 'center',
+              color: 'red',
+              font: { weight: 'bold' }
+            }
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: { display: true, text: 'Tentatives' },
+        ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 }
+      },
+      y: {
+        display: true,
+        title: { display: true, text: 'Valeur' },
+        beginAtZero: true,
+        type: 'linear'
+      }
+    }
+  };
+}
+
+
   closePopup(): void {
     this.selectedResult = null;
   }
 
   openPopup(result: TestResult): void {
-    this.selectedResult = result;
+  console.log('[openPopup] Selected TestResult:', result);  // 👈 ajoute ceci
+
+  this.selectedResult = result;
+
+  // ✅ recharge les détails depuis le backend
+  if (result.test_id) {
+    console.log('[openPopup] Appel refreshTestFromBackend avec ID:', result.test_id); // 👈 ajoute ceci aussi
+    this.refreshTestFromBackend(result.test_id);
+  } else {
+    console.warn('[openPopup] test_id manquant');
   }
+}
+
 
   getStatusClass(status?: string): string {
     switch ((status ?? '').toLowerCase()) {

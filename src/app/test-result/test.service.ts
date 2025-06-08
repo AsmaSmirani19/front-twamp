@@ -17,10 +17,11 @@ export class TestService {
     return this.http.get<TestResult[]>(this.apiUrl);
   }
 
-  getTestResultDetails(id: number): Observable<TestResult> {
-    console.log(`📦 Appel API: récupération du test avec ID = ${id}`);
-    return this.http.get<TestResult>(`${this.apiUrl}/${id}`);
-  }
+ getTestResultDetails(id: number): Observable<TestResult> {
+  console.log(`📦 Appel API: récupération du test avec ID = ${id}`);
+  return this.http.get<TestResult>(`${this.apiUrl}/${id}`);
+}
+
 
   deleteTestResult(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
