@@ -15,4 +15,5 @@ export interface TestResult {
   successRate?: number;
   thresholdName?: string;
   thresholdValue?: number;
+ selectedMetric: string; // 'latency' | 'jitter' | 'throughput'
 }

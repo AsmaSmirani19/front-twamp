@@ -64,73 +64,76 @@ export class TestResultComponent implements OnInit, OnDestroy {
   jitterChart: ChartData<'line'> = { labels: [], datasets: [] };
   throughputChart: ChartData<'line'> = { labels: [], datasets: [] };
 
+get chartOptions(): ChartOptions<'line'> {
+  const threshold = this.getThresholdForSelectedMetric(this.selectedMetric);  // selectedMetric = 'latency', etc.
 
-chartOptions: ChartOptions<'line'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  elements: {
-    line: { tension: 0.3 },
-    point: { radius: 3, hoverRadius: 5 }
-  },
-  plugins: {
-    legend: { display: true, position: 'top' },
-    tooltip: {
-      enabled: true,
-      mode: 'index',
-      intersect: false,
-      callbacks: {
-        label: (context) => {
-          let label = context.dataset.label || '';
-          if (label) label += ': ';
-          if (context.parsed.y !== null) {
-            const value = context.parsed.y;
-            if (label.includes('Throughput')) {
-              label += value > 100 ? `${value.toFixed(2)} Mbps` : `${value.toFixed(4)} Mbps`;
-            } else if (label.includes('Latency') || label.includes('Jitter')) {
-              label += value.toFixed(4) + ' ms';
-            } else {
-              label += value.toFixed(2);
-            }
-          }
-          return label;
-        }
-      }
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    elements: {
+      line: { tension: 0.3 },
+      point: { radius: 3, hoverRadius: 5 }
     },
-    annotation: {
-      annotations: {
-        thresholdLine: {
-          type: 'line',
-          yMin: this.selectedResult?.thresholdValue ?? 3,  // valeur dynamique du seuil
-          yMax: this.selectedResult?.thresholdValue ?? 3,
-          borderColor: 'red',
-          borderWidth: 2,
-          label: {
-            content: `Seuil = ${this.selectedResult?.thresholdValue ?? 3}`,
-            enabled: true,
-            position: 'center',
-            color: 'red',
-            font: {
-              weight: 'bold'
+    plugins: {
+      legend: { display: true, position: 'top' },
+      tooltip: {
+        enabled: true,
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          label: (context) => {
+            let label = context.dataset.label || '';
+            if (label) label += ': ';
+            if (context.parsed.y !== null) {
+              const value = context.parsed.y;
+              if (label.toLowerCase().includes('throughput')) {
+                label += value > 100 ? `${value.toFixed(2)} Mbps` : `${value.toFixed(4)} Mbps`;
+              } else if (label.toLowerCase().includes('latency') || label.toLowerCase().includes('jitter')) {
+                label += value.toFixed(4) + ' ms';
+              } else {
+                label += value.toFixed(2);
+              }
             }
+            return label;
           }
         }
+      },
+      annotation: {
+        annotations: threshold != null && threshold > 0 ? {
+          thresholdLine: {
+            type: 'line',
+            yMin: threshold,
+            yMax: threshold,
+            borderColor: 'red',
+            borderWidth: 2,
+            label: {
+              content: `Seuil = ${threshold}`,
+              enabled: true,
+              position: 'center',
+              color: 'red',
+              font: {
+                weight: 'bold'
+              }
+            }
+          }
+        } : {}
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: { display: true, text: 'Tentatives' },
+        ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 }
+      },
+      y: {
+        display: true,
+        title: { display: true, text: 'Valeur' },
+        beginAtZero: true,
+        type: 'linear'
       }
     }
-  },
-  scales: {
-    x: {
-      display: true,
-      title: { display: true, text: 'Tentatives' },
-      ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 }
-    },
-    y: {
-      display: true,
-      title: { display: true, text: 'Valeur' },
-      beginAtZero: true,
-      type: 'linear'
-    }
-  }
-};
+  };
+}
 
 
   private wsSubscription?: Subscription;
@@ -141,49 +144,71 @@ chartOptions: ChartOptions<'line'> = {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void {
-    this.testService.getTestResults().subscribe({
-      next: (results: any[]) => {
-        this.testResults = results.map((item, index) => ({
-          test_id: item.test_id ?? index,
-          testName: item.test_name ?? `Test ${index}`,
-          testType: item.test_type ?? 'Inconnu',
-          creationDate: item.creation_date ?? new Date().toISOString(),
-          testDuration: item.test_duration ?? '00:00',
-          sourceAgent: item.source_agent ?? 'N/A',
-          targetAgent: item.target_agent ?? 'N/A',
-          status: normalizeStatus(item.status)
-        }));
-      },
-      error: (err) => {
-        console.error("Erreur chargement résultats :", err);
-      }
-    });
+ngOnInit(): void {
+  this.testService.getTestResults().subscribe({
+  next: (results: any[]) => {
+    this.testResults = results.map((item, index) => ({
+      test_id: item.test_id ?? index,
+      testName: item.test_name ?? `Test ${index}`,
+      testType: item.test_type ?? 'Inconnu',
+      creationDate: item.creation_date ?? new Date().toISOString(),
+      testDuration: item.test_duration ?? '00:00',
+      sourceAgent: item.source_agent ?? 'N/A',
+      targetAgent: item.target_agent ?? 'N/A',
+      status: normalizeStatus(item.status),
 
-    this.wsSubscription = this.wsService.statusUpdates$.subscribe({
-      next: (statusUpdate: TestStatus) => {
-        this.refreshTestFromBackend(statusUpdate.test_id);
-      },
-      error: (err) => {
-        console.error('Erreur WebSocket :', err);
-      }
-    });
+      minValue: item.min_value,
+      maxValue: item.max_value,
+      avgValue: item.avg_value,
+      successRate: item.success_rate,
+
+      thresholdName: item.threshold_name ?? item.selected_metrics,  // optionnel
+      thresholdValue: item.threshold_value ?? null,
+      
+      selectedMetric: item.selected_metrics ?? 'latency' // ✅ ici on met selectedMetric
+    }));
+  },
+  error: (err) => {
+    console.error("Erreur chargement résultats :", err);
   }
+});
 
-  ngOnDestroy(): void {
+
+  this.wsSubscription = this.wsService.statusUpdates$.subscribe({
+    next: (statusUpdate: TestStatus) => {
+      this.refreshTestFromBackend(statusUpdate.test_id);
+    },
+    error: (err) => {
+      console.error('Erreur WebSocket :', err);
+    }
+  });
+}
+
+ngOnDestroy(): void {
     this.wsSubscription?.unsubscribe();
   }
 
 private refreshTestFromBackend(testId: number): void {
   console.log('[CALL] refreshTestFromBackend appelé pour testId:', testId);
-  if (!testId || testId <= 0) return;
+
+  // ✅ Vérification initiale
+  if (!testId || testId <= 0) {
+    console.warn('⚠️ ID de test invalide, annulation de la requête.');
+    return;
+  }
 
   this.testService.getTestResultDetails(testId).subscribe({
     next: (details: TestResult) => {
+      if (!details) {
+        console.warn('⚠️ Détails du test introuvables dans la réponse.');
+        return;
+      }
+
       console.log('✅ Données reçues de l’API (raw):', JSON.stringify(details, null, 2));
       console.log('🔎 thresholdName:', details.thresholdName);
       console.log('🔎 thresholdValue:', details.thresholdValue);
 
+      // ✅ Mise à jour ou ajout dans la liste des résultats
       const index = this.testResults.findIndex(t => t.test_id === testId);
       if (index !== -1) {
         this.testResults[index] = { ...this.testResults[index], ...details };
@@ -191,24 +216,75 @@ private refreshTestFromBackend(testId: number): void {
         this.testResults.push(details);
       }
 
+      // ✅ Forcer le déclenchement de changement dans le tableau
       this.testResults = [...this.testResults];
 
+      // ✅ Sélectionner le résultat
       this.selectedResult = details;
+
       console.log('📋 selectedResult final:', JSON.stringify(this.selectedResult, null, 2));
+      console.log('📊 Métrique sélectionnée :', this.selectedResult.selectedMetric);
 
-      // Mise à jour dynamique de la config chartOptions avec la nouvelle valeur de seuil
-      this.chartOptions = this.getChartOptions(this.selectedResult.thresholdValue);
+      // ✅ Mise à jour des graphiques via fonction centralisée
+      this.updateCharts();
 
-      // Forcer la mise à jour du graphique après un court délai pour laisser Angular appliquer les changements
-      setTimeout(() => {
-        this.chart?.update();
-      }, 0);
+      // ✅ Mise à jour de l'affichage Angular
+      this.cdr.detectChanges();
     },
     error: (error) => {
-      console.error(`Erreur chargement détails test ${testId}`, error);
+      console.error(`❌ Erreur lors du chargement des détails du test ${testId} :`, error);
     }
   });
 }
+
+private updateCharts(): void {
+  if (!this.selectedResult) {
+    console.warn('[updateCharts] Aucune donnée sélectionnée pour mise à jour des graphiques.');
+    return;
+  }
+
+  this.cdr.detectChanges();
+
+  setTimeout(() => {
+    try {
+      const selectedMetric = this.selectedResult.selectedMetric;
+      const thresholdValue = this.selectedResult.thresholdValue;
+
+      const updateChart = (chartRef: any, metricName: string) => {
+        const chart = chartRef?.chart;
+        if (!chart) return;
+
+        const shouldShowThreshold = selectedMetric === metricName;
+        const threshold = shouldShowThreshold ? thresholdValue : null;
+
+        // Réinitialiser les anciennes annotations
+        if (chart.options.plugins?.annotation?.annotations) {
+          chart.options.plugins.annotation.annotations = {};
+        }
+
+        // Appliquer les nouvelles options
+        chart.options = {
+          ...chart.options,
+          plugins: {
+            ...chart.options.plugins,
+            annotation: this.getChartOptions(threshold, selectedMetric, metricName)?.plugins?.annotation
+          }
+        };
+
+        chart.update();
+
+        console.log(`✅ [${metricName}] seuil visible: ${shouldShowThreshold ? thresholdValue : 'non'}`);
+      };
+
+      updateChart(this.latencyChartRef, 'latency');
+      updateChart(this.jitterChartRef, 'jitter');
+      updateChart(this.throughputChartRef, 'throughput');
+    } catch (err) {
+      console.error('[updateCharts] Erreur lors de la mise à jour des graphiques :', err);
+    }
+  }, 0);
+}
+
 
 
 
@@ -397,44 +473,6 @@ private refreshTestFromBackend(testId: number): void {
     return result;
   }
 
-updateCharts(): void {
-  this.cdr.detectChanges();
-  setTimeout(() => {
-    try {
-      switch (this.selectedMetric) {
-        case 'latency':
-          if (this.latencyChartRef) {
-            console.log('[updateCharts] Mise à jour du graphique: Latency');
-            this.latencyChartRef.update();
-          } else {
-            console.warn('[updateCharts] latencyChartRef non disponible');
-          }
-          break;
-        case 'jitter':
-          if (this.jitterChartRef) {
-            console.log('[updateCharts] Mise à jour du graphique: Jitter');
-            this.jitterChartRef.update();
-          } else {
-            console.warn('[updateCharts] jitterChartRef non disponible');
-          }
-          break;
-        case 'throughput':
-          if (this.throughputChartRef) {
-            console.log('[updateCharts] Mise à jour du graphique: Throughput');
-            this.throughputChartRef.update();
-          } else {
-            console.warn('[updateCharts] throughputChartRef non disponible');
-          }
-          break;
-        default:
-          console.warn('[updateCharts] Métrique inconnue:', this.selectedMetric);
-      }
-    } catch (err) {
-      console.error('[updateCharts] Erreur lors de la mise à jour des graphiques :', err);
-    }
-  }, 400);
-}
-
 hasValidChartData(chart: ChartData<'line'>): boolean {
   const isValid = Array.isArray(chart?.datasets) &&
          chart.datasets.length > 0 &&
@@ -507,71 +545,43 @@ private updateThresholdLine(threshold: number): void {
 
   this.chart?.update(); // Redessine la courbe avec la nouvelle ligne
 }
-getChartOptions(thresholdValue: number | undefined): ChartOptions<'line'> {
+
+getChartOptions(threshold: number | null, selectedMetric: string, currentMetric: string): any {
+  const showThreshold = threshold !== null && selectedMetric === currentMetric;
+
   return {
     responsive: true,
-    maintainAspectRatio: false,
-    elements: {
-      line: { tension: 0.3 },
-      point: { radius: 3, hoverRadius: 5 }
-    },
     plugins: {
-      legend: { display: true, position: 'top' },
-      tooltip: {
-        enabled: true,
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: (context) => {
-            let label = context.dataset.label || '';
-            if (label) label += ': ';
-            if (context.parsed.y !== null) {
-              const value = context.parsed.y;
-              if (label.includes('Throughput')) {
-                label += value > 100 ? `${value.toFixed(2)} Mbps` : `${value.toFixed(4)} Mbps`;
-              } else if (label.includes('Latency') || label.includes('Jitter')) {
-                label += value.toFixed(4) + ' ms';
-              } else {
-                label += value.toFixed(2);
+      annotation: {
+        annotations: showThreshold
+          ? {
+              thresholdLine: {
+                type: 'line',
+                yMin: threshold,
+                yMax: threshold,
+                borderColor: 'red',
+                borderWidth: 2,
+                borderDash: [6, 6],
+                label: {
+                  enabled: true,
+                  content: `Seuil: ${threshold}`,
+                  position: 'start',
+                  backgroundColor: 'rgba(255,0,0,0.7)',
+                  color: 'white'
+                }
               }
             }
-            return label;
-          }
-        }
-      },
-      annotation: {
-        annotations: {
-          thresholdLine: {
-            type: 'line',
-            yMin: thresholdValue ?? 3,
-            yMax: thresholdValue ?? 3,
-            borderColor: 'red',
-            borderWidth: 2,
-            label: {
-              content: `Seuil = ${thresholdValue ?? 3}`,
-              enabled: true,
-              position: 'center',
-              color: 'red',
-              font: { weight: 'bold' }
-            }
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        display: true,
-        title: { display: true, text: 'Tentatives' },
-        ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 }
-      },
-      y: {
-        display: true,
-        title: { display: true, text: 'Valeur' },
-        beginAtZero: true,
-        type: 'linear'
+          : {}
       }
     }
   };
+}
+
+getThresholdForSelectedMetric(metric: string): number {
+  if (this.selectedResult && this.selectedResult.selectedMetric === metric) {
+    return this.selectedResult.thresholdValue || 0;
+  }
+  return 0;
 }
 
 

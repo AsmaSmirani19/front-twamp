@@ -21,7 +21,6 @@ import { ThresholdComponent } from '../../threshold/threshold.component';
 import { TypographyComponent } from '../../typography/typography.component';
 import { IconsComponent } from '../../icons/icons.component';
 import { MapsComponent } from '../../maps/maps.component';
-import { NotificationsComponent } from '../../notifications/notifications.component';
 import { NgChartsModule } from 'ng2-charts';
 
 
@@ -51,7 +50,6 @@ import { NgChartsModule } from 'ng2-charts';
     TypographyComponent,
     IconsComponent,
     MapsComponent,
-    NotificationsComponent,
   ]
 })
 
