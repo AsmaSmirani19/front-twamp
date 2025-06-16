@@ -13,22 +13,23 @@
                 <th>Action</th>
               </tr>
             </thead>
-            <tbody>
-              <tr *ngFor="let result of testResults; trackBy: trackByTestId">
-                <td>{{ result.testName }}</td>
-                <td>{{ result.testType }}</td>
-                <td>
-                  <span class="tag" [ngClass]="getStatusClass(result.status)">
-                    {{ result.status }}
-                  </span>
-                </td>
-                <td>{{ result.sourceAgent }}</td>
-                <td>
-                  <i class="fa fa-eye text-info me-2" (click)="onView(result)" style="cursor:pointer;"></i>
-                  <i class="fa fa-trash text-danger" (click)="onDelete(result)" style="cursor:pointer;"></i>
-                </td>
-              </tr>
-            </tbody>
+           <tbody>
+            <tr *ngFor="let result of testResults; trackBy: trackByTestTargetId">
+              <td>{{ result.testName }}</td>
+              <td>{{ result.testType }}</td>
+              <td>
+                <span class="tag" [ngClass]="getStatusClass(result.status)">
+                  {{ result.status }}
+                </span>
+              </td>
+              <td>{{ result.sourceAgent }}</td>
+              <td>
+                <i class="fa fa-eye text-info me-2" (click)="onView(result)" style="cursor:pointer;"></i>
+                <i class="fa fa-trash text-danger" (click)="onDelete(result)" style="cursor:pointer;"></i>
+              </td>
+            </tr>
+          </tbody>
+
           </table>
           <div *ngIf="!testResults || testResults.length === 0" class="text-center text-muted">No results found.</div>
         </div>
@@ -41,7 +42,7 @@
 <!-- Popup styled like Pinterest -->
 <div class="pinterest-popup-overlay" *ngIf="selectedResult">
   <div class="pinterest-popup-card">
-    
+
     <!-- Header -->
     <div class="popup-header">
       <h4>{{ selectedResult.testName }}</h4>
@@ -50,9 +51,9 @@
 
     <!-- Body -->
     <div class="popup-body">
-      
-      <!-- Test Info -->
-      <div class="test-info">
+
+      <!-- 🟦 Test Info (pleine largeur) -->
+      <div class="test-info full-width">
         <p><strong>Status:</strong>
           <span [ngClass]="getStatusClass(selectedResult.status)">
             {{ selectedResult.status }}
@@ -64,11 +65,39 @@
         <p><strong>Target Agent:</strong> {{ selectedResult.targetAgent }}</p>
         <p><strong>Threshold Name:</strong> {{ selectedResult.thresholdName }}</p>
         <p><strong>Threshold Value:</strong> {{ selectedResult.thresholdValue }}</p>
-
       </div>
 
-      <!-- Metric Tabs -->
-      <div class="metric-tabs">
+      <!-- 🟩 Tableau métriques QoS PAR TARGET -->
+    <table class="simple-metrics-table" *ngIf="qosResultsMap[selectedResult.test_id]?.length">
+      <thead>
+        <tr>
+          <th>Target ID</th>
+          <th>Avg Latency (ms)</th>
+          <th>Avg Jitter (ms)</th>
+          <th>Avg Throughput (kbps)</th>
+          <th>Packet Loss (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let qos of qosResultsMap[selectedResult.test_id]">
+          <td>{{ qos.target_id }}</td>
+          <td>{{ qos.avg_latency_ms | number:'1.1-2' }}</td>
+          <td>{{ qos.avg_jitter_ms | number:'1.1-2' }}</td>
+          <td>{{ qos.avg_throughput_kbps | number:'1.1-2' }}</td>
+          <td>{{ qos.packet_loss_percent | number:'1.1-2' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+
+  <!-- 🟥 Si pas de données -->
+  <div class="no-data-message" *ngIf="!qosResultsMap[selectedResult.test_id]?.length">
+    Aucune donnée QoS disponible pour ce test.
+  </div>
+
+
+      <!-- 🟧 Metric Tabs (boutons) -->
+      <div class="metric-tabs center-tabs">
         <button 
           *ngFor="let metric of ['latency', 'jitter', 'throughput']"
           [ngClass]="{ 'active': selectedMetric === metric }"
@@ -77,79 +106,47 @@
         </button>
       </div>
 
-      <!-- Stats -->
-      <div class="stats-grid" *ngIf="selectedResult.minValue !== undefined">
-        <div class="stat-item">
-          <span class="stat-label">Min Value:</span>
-          <span class="stat-value">{{ selectedResult.minValue }}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Max Value:</span>
-          <span class="stat-value">{{ selectedResult.maxValue }}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Avg Value:</span>
-          <span class="stat-value">{{ selectedResult.avgValue }}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Success Rate:</span>
-          <span class="stat-value">{{ selectedResult.successRate }}%</span>
-        </div>
-      </div>
+    </div>
+    
+<!-- 🟩 Charts for each agent -->
+<div class="chart-wrapper" *ngIf="agentChartsData?.length > 0">
+  <div *ngFor="let chartData of agentChartsData">
+    <h3>🎯 Agent {{ chartData.targetId }}</h3>
 
-    <!-- Charts -->
-  <div class="chart-wrapper">
+    <div class="chart-container" *ngIf="selectedMetric === 'latency'">
+      <canvas *ngIf="hasValidChartData(chartData.latencyChart); else noLatency"
+              baseChart
+              [data]="chartData.latencyChart"
+              [options]="chartData.latencyChart.options"
+              [type]="'line'">
+      </canvas>
+      <ng-template #noLatency>
+        <div class="no-data-message">No latency data available</div>
+      </ng-template>
+    </div>
 
-    <!-- Latency Chart -->
-    <ng-container *ngIf="selectedMetric === 'latency'">
-      <div class="chart-container" style="min-height:300px;">
-        <canvas *ngIf="hasValidChartData(latencyChart); else noLatency"
-                baseChart
-                latencyChartRef="baseChart"
-                [data]="latencyChart"
-                [options]="chartOptions"
-                [type]="'line'">
-        </canvas>
-        <ng-template #noLatency>
-          <div class="no-data-message">No latency data available</div>
-        </ng-template>
-      </div>
-    </ng-container>
+    <div class="chart-container" *ngIf="selectedMetric === 'jitter'">
+      <canvas *ngIf="hasValidChartData(chartData.jitterChart); else noJitter"
+              baseChart
+              [data]="chartData.jitterChart"
+              [options]="chartData.jitterChart.options"
+              [type]="'line'">
+      </canvas>
+      <ng-template #noJitter>
+        <div class="no-data-message">No jitter data available</div>
+      </ng-template>
+    </div>
 
-    <!-- Jitter Chart -->
-    <ng-container *ngIf="selectedMetric === 'jitter'">
-      <div class="chart-container" style="min-height:300px;">
-        <canvas *ngIf="hasValidChartData(jitterChart); else noJitter"
-                baseChart
-                jitterChartRef="baseChart"
-                [data]="jitterChart"
-                [options]="chartOptions"
-                [type]="'line'">
-        </canvas>
-        <ng-template #noJitter>
-          <div class="no-data-message">No jitter data available</div>
-        </ng-template>
-      </div>
-    </ng-container>
-
-    <!-- Throughput Chart -->
-    <ng-container *ngIf="selectedMetric === 'throughput'">
-      <div class="chart-container" style="min-height:300px;">
-        <canvas *ngIf="hasValidChartData(throughputChart); else noThroughput"
-                baseChart
-                throughputChartRef="baseChart"
-                [data]="throughputChart"
-                [options]="chartOptions"
-                [type]="'line'">
-        </canvas>
-        <ng-template #noThroughput>
-          <div class="no-data-message">No throughput data available</div>
-        </ng-template>
-      </div>
-    </ng-container>
-
-  </div>
-
+    <div class="chart-container" *ngIf="selectedMetric === 'throughput'">
+      <canvas *ngIf="hasValidChartData(chartData.throughputChart); else noThroughput"
+              baseChart
+              [data]="chartData.throughputChart"
+              [options]="chartData.throughputChart.options"
+              [type]="'line'">
+      </canvas>
+      <ng-template #noThroughput>
+        <div class="no-data-message">No throughput data available</div>
+      </ng-template>
     </div>
   </div>
 </div>

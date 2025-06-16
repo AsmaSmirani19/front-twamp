@@ -24,9 +24,11 @@ export const environment = {
 
 
 
-
+  qosResultsApiUrl: 'http://localhost:5000/api/qos-results',
   plannedTestApiUrl: 'http://localhost:5000/api/planned-test',
-  testResultsByIdApiUrl: 'http://localhost:5000/api/test-results_id'
+  testResultsByIdApiUrl: 'http://localhost:5000/api/test-results_id',
+  realTargetIdApiUrl: 'http://localhost:5000/api/tests/real-target',
+
 
 };
 

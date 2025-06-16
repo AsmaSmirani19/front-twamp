@@ -1,52 +1,33 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  ViewChild,
-  ChangeDetectorRef
-} from '@angular/core';
+
+import {Component,OnInit,OnDestroy,ViewChild,ChangeDetectorRef} from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ChartData, ChartOptions } from 'chart.js';
+import {Chart,ChartData,ChartOptions,registerables} from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
 import { BaseChartDirective } from 'ng2-charts';
 import { WebSocketService, TestStatus } from './web-socket.service';
 import { TestService } from './test.service';
 import { TestResult } from './test-result.model';
-import {
-  Chart,
-  registerables
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
+import { QoSMetrics } from './test-result.model';
+import { AttemptResult } from './test-result.model';
+import {getChartOptions,getColorForAgent,hasValidChartData,ChartUtils} from './chart_gph'; // adapte le chemin si besoin
 
-// Enregistre tous les composants nécessaires (axes, légendes, etc.)
+
 Chart.register(...registerables, annotationPlugin);
 
-
-
 type AllowedStatus = 'error' | 'unknown' | 'in_progress' | 'completed' | 'failed';
-
 function normalizeStatus(status?: string): AllowedStatus {
   const allowedStatuses: AllowedStatus[] = ['error', 'unknown', 'in_progress', 'completed', 'failed'];
   return (status && allowedStatuses.includes(status as AllowedStatus))
     ? (status as AllowedStatus)
     : 'unknown';
 }
-
-export interface AttemptResult {
-  latency?: number;
-  jitter?: number;
-  throughput?: number;
-}
-
 @Component({
   selector: 'app-test-result',
   templateUrl: './test-result.component.html',
   styleUrls: ['./test-result.component.scss']
 })
 
-
 export class TestResultComponent implements OnInit, OnDestroy {
-
-  
   testResults: TestResult[] = [];
   selectedResult: TestResult | null = null;
   attemptResults: AttemptResult[] = [];
@@ -54,86 +35,42 @@ export class TestResultComponent implements OnInit, OnDestroy {
   @ViewChild('latencyChartRef', { static: false, read: BaseChartDirective }) latencyChartRef?: BaseChartDirective;
   @ViewChild('jitterChartRef', { static: false, read: BaseChartDirective }) jitterChartRef?: BaseChartDirective;
   @ViewChild('throughputChartRef', { static: false, read: BaseChartDirective }) throughputChartRef?: BaseChartDirective;
+
+  
   @ViewChild('chart') chart: any;
 
-
+  selectedTargetId: string | null = null;
+  
   selectedMetric: string = 'latency';
   chartLabels: string[] = [];
-  
+ qosResultsMap: { [testId: number]: QoSMetrics[] } = {};
+
   latencyChart: ChartData<'line'> = { labels: [], datasets: [] };
   jitterChart: ChartData<'line'> = { labels: [], datasets: [] };
   throughputChart: ChartData<'line'> = { labels: [], datasets: [] };
+  testTargetResults: { test_id: number; target_id: number | null; details: TestResult }[] = [];
 
-get chartOptions(): ChartOptions<'line'> {
-  const threshold = this.getThresholdForSelectedMetric(this.selectedMetric);  // selectedMetric = 'latency', etc.
+  availableTargetIds: number[] = [];
 
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    elements: {
-      line: { tension: 0.3 },
-      point: { radius: 3, hoverRadius: 5 }
-    },
-    plugins: {
-      legend: { display: true, position: 'top' },
-      tooltip: {
-        enabled: true,
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: (context) => {
-            let label = context.dataset.label || '';
-            if (label) label += ': ';
-            if (context.parsed.y !== null) {
-              const value = context.parsed.y;
-              if (label.toLowerCase().includes('throughput')) {
-                label += value > 100 ? `${value.toFixed(2)} Mbps` : `${value.toFixed(4)} Mbps`;
-              } else if (label.toLowerCase().includes('latency') || label.toLowerCase().includes('jitter')) {
-                label += value.toFixed(4) + ' ms';
-              } else {
-                label += value.toFixed(2);
-              }
-            }
-            return label;
-          }
-        }
-      },
-      annotation: {
-        annotations: threshold != null && threshold > 0 ? {
-          thresholdLine: {
-            type: 'line',
-            yMin: threshold,
-            yMax: threshold,
-            borderColor: 'red',
-            borderWidth: 2,
-            label: {
-              content: `Seuil = ${threshold}`,
-              enabled: true,
-              position: 'center',
-              color: 'red',
-              font: {
-                weight: 'bold'
-              }
-            }
-          }
-        } : {}
-      }
-    },
-    scales: {
-      x: {
-        display: true,
-        title: { display: true, text: 'Tentatives' },
-        ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 }
-      },
-      y: {
-        display: true,
-        title: { display: true, text: 'Valeur' },
-        beginAtZero: true,
-        type: 'linear'
-      }
-    }
-  };
-}
+  latencyChartOptions!: ChartOptions<'line'>;
+  jitterChartOptions!: ChartOptions<'line'>;
+  throughputChartOptions!: ChartOptions<'line'>;
+
+ agentChartsData: Array<{
+  targetId: number;
+  testName: string;
+  attemptResults: AttemptResult[];
+  latencyChart: ChartData;
+  jitterChart: ChartData;
+  throughputChart: ChartData;
+  latencyChartOptions: ChartOptions;
+  jitterChartOptions: ChartOptions;
+  throughputChartOptions: ChartOptions;
+}> = [];
+
+
+// Dans test-result.component.ts
+public hasValidChartData = hasValidChartData;
 
 
   private wsSubscription?: Subscription;
@@ -143,51 +80,106 @@ get chartOptions(): ChartOptions<'line'> {
     private testService: TestService,
     private cdr: ChangeDetectorRef
   ) {}
-
 ngOnInit(): void {
+  console.log('[ngOnInit] ✅ Initialisation du composant');
+
   this.testService.getTestResults().subscribe({
-  next: (results: any[]) => {
-    this.testResults = results.map((item, index) => ({
-      test_id: item.test_id ?? index,
-      testName: item.test_name ?? `Test ${index}`,
-      testType: item.test_type ?? 'Inconnu',
-      creationDate: item.creation_date ?? new Date().toISOString(),
-      testDuration: item.test_duration ?? '00:00',
-      sourceAgent: item.source_agent ?? 'N/A',
-      targetAgent: item.target_agent ?? 'N/A',
-      status: normalizeStatus(item.status),
+    next: (results: any[]) => {
+      console.log('[ngOnInit] 📦 Résultats bruts reçus de l’API:', JSON.stringify(results, null, 2));
 
-      minValue: item.min_value,
-      maxValue: item.max_value,
-      avgValue: item.avg_value,
-      successRate: item.success_rate,
-
-      thresholdName: item.threshold_name ?? item.selected_metrics,  // optionnel
-      thresholdValue: item.threshold_value ?? null,
+      this.testResults = [];
       
-      selectedMetric: item.selected_metrics ?? 'latency' // ✅ ici on met selectedMetric
-    }));
-  },
-  error: (err) => {
-    console.error("Erreur chargement résultats :", err);
-  }
-});
+      results.forEach((test, testIndex) => {
+        const targetIds = Array.isArray(test.TargetIDs) ? test.TargetIDs : [test.TargetIDs];
+        const targetAgents = Array.isArray(test.target_agent) ? test.target_agent : [test.target_agent];
 
+        // Conserver les targets tels quels, sans vérifier la cohérence ni créer une ligne par cible
+        const testResult: TestResult = {
+          test_id: test.test_id ?? testIndex,
+          target_id: targetIds.map(id => this.toNumber(id)).filter(id => id > 0),  // on garde tableau de target_id
+          testName: test.test_name ?? `Test ${testIndex}`,
+          testType: test.test_type ?? 'Inconnu',
+          creationDate: test.creation_date ?? new Date().toISOString(),
+          testDuration: test.test_duration ?? '00:00',
+          sourceAgent: test.source_agent ?? 'N/A',
+          targetAgent: targetAgents.join(', '),  // on affiche tous les target agents sous forme de chaîne
+          status: this.normalizeStatus(test.status),
+          minValue: test.min_value,
+          maxValue: test.max_value,
+          avgValue: test.avg_value,
+          successRate: test.success_rate,
+          selectedMetric: test.selected_metrics ?? 'latency',
+          thresholdName: test.threshold_name ?? (test.selected_metrics ?? 'latency'),
+          thresholdValue: test.thresholds?.[test.selected_metrics ?? 'latency']?.value ?? test.threshold_value,
+          thresholdType: test.thresholds?.[test.selected_metrics ?? 'latency']?.type ?? test.threshold_type ?? 'avg',
+          thresholdOperator: test.thresholds?.[test.selected_metrics ?? 'latency']?.operator ?? test.threshold_operator ?? '<'
+        };
 
+        this.testResults.push(testResult);
+      });
+
+      console.log('✅ Résultats prêts à afficher (tous tests tel quel):', this.testResults);
+
+      // Chargement des résultats QoS associés
+      const uniqueTestIds = new Set(this.testResults.map(tr => tr.test_id));
+      uniqueTestIds.forEach(testId => {
+        console.log(`🌐 Appel API QoS pour test ID = ${testId}`);
+        this.testService.getQoSResultsByTestId(testId).subscribe({
+          next: (qosData) => {
+            console.log(`✅ Résultats QoS reçus pour test ID = ${testId} :`, qosData);
+            this.qosResultsMap[testId] = qosData;
+          },
+          error: (err) => {
+            console.error(`❌ Erreur QoS test ${testId}:`, err);
+            this.qosResultsMap[testId] = [];
+          }
+        });
+      });
+    },
+    error: (err) => {
+      console.error("❌ Erreur lors du chargement des tests:", err);
+      this.testResults = [];
+    }
+  });
+
+  // Mise à jour WebSocket (idem)
   this.wsSubscription = this.wsService.statusUpdates$.subscribe({
     next: (statusUpdate: TestStatus) => {
+      console.log(`[ngOnInit][WebSocket] 🔄 Mise à jour reçue pour test_id = ${statusUpdate.test_id}`);
       this.refreshTestFromBackend(statusUpdate.test_id);
     },
     error: (err) => {
-      console.error('Erreur WebSocket :', err);
+      console.error('❌ Erreur WebSocket:', err);
     }
   });
 }
 
+
+private normalizeStatus(status?: string): AllowedStatus {
+  const statusMap: Record<string, AllowedStatus> = {
+    success: 'completed',
+    failed: 'failed',
+    running: 'in_progress',
+    pending: 'in_progress',
+    error: 'error'
+  };
+  return statusMap[status?.toLowerCase()] || 'unknown';
+}
+
+toNumber(value: any): number {
+  const num = Number(value);
+  return isNaN(num) || num <= 0 ? 0 : num;
+}
+
+// Fonctions helpers (à ajouter dans la classe)
+private ensureArray(value: any): string[] {
+  if (Array.isArray(value)) return value;
+  return value ? [value] : ['N/A'];
+}
+
 ngOnDestroy(): void {
     this.wsSubscription?.unsubscribe();
-  }
-
+}
 private refreshTestFromBackend(testId: number): void {
   console.log('[CALL] refreshTestFromBackend appelé pour testId:', testId);
 
@@ -198,37 +190,67 @@ private refreshTestFromBackend(testId: number): void {
   }
 
   this.testService.getTestResultDetails(testId).subscribe({
-    next: (details: TestResult) => {
+    next: (details: any) => {
       if (!details) {
         console.warn('⚠️ Détails du test introuvables dans la réponse.');
         return;
       }
 
       console.log('✅ Données reçues de l’API (raw):', JSON.stringify(details, null, 2));
-      console.log('🔎 thresholdName:', details.thresholdName);
-      console.log('🔎 thresholdValue:', details.thresholdValue);
 
-      // ✅ Mise à jour ou ajout dans la liste des résultats
-      const index = this.testResults.findIndex(t => t.test_id === testId);
-      if (index !== -1) {
-        this.testResults[index] = { ...this.testResults[index], ...details };
-      } else {
-        this.testResults.push(details);
+      // Vérification que target_id est défini et valide
+      if (details.target_id === undefined || details.target_id === null) {
+        console.warn(`[refreshTestFromBackend] ⚠️ target_id manquant ou invalide pour test_id ${testId}. Mise à jour ignorée.`);
+        return; // On sort sans rien faire pour éviter d’ajouter un élément avec target_id invalide
       }
 
-      // ✅ Forcer le déclenchement de changement dans le tableau
+      // ✅ Mapping vers l'interface attendue (camelCase)
+      const mappedDetails: TestResult = {
+        test_id: details.test_id,
+        target_id: details.target_id,
+        testName: details.test_name,
+        testType: details.test_type,
+        status: details.status,
+        creationDate: details.creation_date,
+        testDuration: details.test_duration,
+        sourceAgent: details.source_agent,
+        targetAgent: details.target_agent,
+        thresholdName: details.threshold_name,
+        thresholdValue: details.threshold_value,
+        selectedMetric: details.selected_metric,
+      };
+
+      console.log('[refreshTestFromBackend] target_id reçu:', details.target_id);
+
+      // ✅ Nettoyage des anciennes données pour ce testId dans testTargetResults
+      this.testTargetResults = this.testTargetResults.filter(
+        item => item.test_id !== testId
+      );
+
+      // Ajout des nouvelles données dans testTargetResults
+      this.testTargetResults.push({
+        test_id: testId,
+        target_id: details.target_id,
+        details: { ...mappedDetails }
+      });
+
+      // Mise à jour ou ajout dans testResults (avec données mappées)
+      const index = this.testResults.findIndex(t => t.test_id === testId);
+      if (index !== -1) {
+        this.testResults[index] = { ...this.testResults[index], ...mappedDetails };
+      } else {
+        this.testResults.push(mappedDetails);
+      }
+
+      // Pour forcer Angular à détecter le changement
       this.testResults = [...this.testResults];
 
-      // ✅ Sélectionner le résultat
-      this.selectedResult = details;
+      // Sélection de l’élément pour affichage
+      this.selectedResult = mappedDetails;
 
       console.log('📋 selectedResult final:', JSON.stringify(this.selectedResult, null, 2));
-      console.log('📊 Métrique sélectionnée :', this.selectedResult.selectedMetric);
 
-      // ✅ Mise à jour des graphiques via fonction centralisée
       this.updateCharts();
-
-      // ✅ Mise à jour de l'affichage Angular
       this.cdr.detectChanges();
     },
     error: (error) => {
@@ -236,6 +258,28 @@ private refreshTestFromBackend(testId: number): void {
     }
   });
 }
+
+
+
+someMethodUsingCharts(): void {
+  const results = this.attemptResults;
+
+  const chartUtils = new ChartUtils();
+  const chartsData = chartUtils.initChartsData(results);
+
+  if (chartsData) {
+    this.latencyChart = chartsData.latencyChart;
+    this.latencyChartOptions = chartsData.latencyChartOptions;
+    this.jitterChart = chartsData.jitterChart;
+    this.jitterChartOptions = chartsData.jitterChartOptions;
+    this.throughputChart = chartsData.throughputChart;
+    this.throughputChartOptions = chartsData.throughputChartOptions;
+  } else {
+    console.warn('[someMethodUsingCharts] Données graphiques non générées.');
+  }
+}
+
+
 
 private updateCharts(): void {
   if (!this.selectedResult) {
@@ -250,6 +294,15 @@ private updateCharts(): void {
       const selectedMetric = this.selectedResult.selectedMetric;
       const thresholdValue = this.selectedResult.thresholdValue;
 
+      const getMetricValue = (attempt: AttemptResult, metric: string): number => {
+        switch (metric) {
+          case 'latency': return attempt.latency_ms;
+          case 'jitter': return attempt.jitter_ms;
+          case 'throughput': return attempt.throughput_kbps;
+          default: return 0;
+        }
+      };
+
       const updateChart = (chartRef: any, metricName: string) => {
         const chart = chartRef?.chart;
         if (!chart) return;
@@ -257,17 +310,37 @@ private updateCharts(): void {
         const shouldShowThreshold = selectedMetric === metricName;
         const threshold = shouldShowThreshold ? thresholdValue : null;
 
+        const labels: string[] = [];
+        const dataPoints: number[] = [];
+
+        this.selectedResult.attemptResults?.forEach((attempt) => {
+          labels.push(`Agent ${attempt.target_id}`);
+          dataPoints.push(getMetricValue(attempt, metricName));
+        });
+
+        chart.data = {
+          labels,
+          datasets: [{
+            label: `${metricName}`,
+            data: dataPoints,
+            backgroundColor: 'rgba(75, 192, 192, 0.4)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1,
+            fill: true
+          }]
+        };
+
         // Réinitialiser les anciennes annotations
         if (chart.options.plugins?.annotation?.annotations) {
           chart.options.plugins.annotation.annotations = {};
         }
 
-        // Appliquer les nouvelles options
+        // Appliquer les nouvelles options avec seuil si nécessaire
         chart.options = {
           ...chart.options,
           plugins: {
             ...chart.options.plugins,
-            annotation: this.getChartOptions(threshold, selectedMetric, metricName)?.plugins?.annotation
+            annotation: getChartOptions(threshold, selectedMetric, metricName)?.plugins?.annotation
           }
         };
 
@@ -285,9 +358,6 @@ private updateCharts(): void {
   }, 0);
 }
 
-
-
-
  switchMetric(metric: string): void {
   this.selectedMetric = metric;
 
@@ -297,88 +367,123 @@ private updateCharts(): void {
   }, 300);
 }
 
-  
-  onView(result: TestResult): void {
-    const testId = result?.test_id;
-    if (!testId || testId <= 0) return;
 
-    console.log('[onView] Selected TestResult ID:', testId);
-
-    this.clearChartsData();
-   
-    this.selectedResult = result;
-    this.refreshTestFromBackend(testId); // ← AJOUTER CETTE LIGNE
-    this.cdr.detectChanges();
-
-
-    this.testService.getAttemptResults(testId).subscribe({
-      next: (data: AttemptResult[]) => {
-        if (!data || data.length === 0) {
-          console.warn('[onView] Aucune donnée reçue pour les tentatives');
-          return;
-        }
-
-        this.attemptResults = data;
-      this.chartLabels = data.map((_, i) => `Attempt ${i + 1}`);
-
-  const latencyData = this.getLatencyData();      // tableau de nombres
-  const jitterData = this.getJitterData();        // idem
-  const throughputData = this.getThroughputData(); // idem
-
-  // Vérifie que longueur des labels == longueur des datasets
-  if (
-    latencyData.length !== this.chartLabels.length ||
-    jitterData.length !== this.chartLabels.length ||
-    throughputData.length !== this.chartLabels.length
-  ) {
-    console.warn('[onView] Les données de chart ne correspondent pas aux labels');
+onView(result: TestResult): void {
+  const testId = result?.test_id;
+  if (!testId || testId <= 0) {
+    console.warn('[onView] ❌ testId invalide ou non fourni:', testId);
     return;
   }
 
-  this.latencyChart.labels = this.chartLabels;
-  this.latencyChart.datasets = [{
-    data: latencyData,
-    label: 'Latency',
-    borderColor: 'blue',
-    fill: false,
-  }];
+  this.clearChartsData();
+  this.selectedResult = result;
+  this.agentChartsData = [];
 
-  this.jitterChart.labels = this.chartLabels;
-  this.jitterChart.datasets = [{
-    data: jitterData,
-    label: 'Jitter',
-    borderColor: 'green',
-    fill: false,
-  }];
+  const thresholdValue = result.thresholdValue ?? null;
+  const thresholdType = result.thresholdType ?? null;
+  const thresholdOperator = result.thresholdOperator ?? null;
+  const selectedMetric = result.selectedMetric ?? 'latency';
 
-  this.throughputChart.labels = this.chartLabels;
-  this.throughputChart.datasets = [{
-    data: throughputData,
-    label: 'Throughput',
-    borderColor: 'red',
-    fill: false,
-  }];
-
-  this.cdr.detectChanges();
-
-  setTimeout(() => {
-    [this.latencyChartRef, this.jitterChartRef, this.throughputChartRef].forEach(chart => {
-      if (chart?.chart) {
-        chart.chart.update();
-        chart.chart.render();
+  this.testService.getTargetIds(testId).subscribe({
+    next: (targetIds) => {
+      if (!targetIds || targetIds.length === 0) {
+        console.warn(`[onView] ⚠️ Aucun target_id trouvé pour testId ${testId}`);
+        return;
       }
-    });
-  }, 200);
 
-      },
-      error: (err) => {
-        console.error('[onView] Erreur récupération tentative:', err);
-        this.clearChartsData();
-        this.cdr.detectChanges();
-      }
-    });
-  }
+      // Pour chaque target_id, on récupère les données d'attempt et on crée une courbe
+      targetIds.forEach(targetId => {
+        if (!targetId || targetId <= 0) {
+          console.warn('[onView] ❌ targetId invalide:', targetId);
+          return;
+        }
 
+        this.testService.getAttemptResults(testId, targetId).subscribe({
+          next: (data) => {
+            if (!data || data.length === 0) {
+              console.warn(`[onView] ⚠️ Aucune donnée reçue pour targetId ${targetId}`);
+              return;
+            }
+
+            const validData = data.filter(r => r.target_id && r.target_id > 0);
+            if (validData.length === 0) {
+              console.warn(`[onView] ⚠️ Toutes les tentatives invalides pour targetId ${targetId}`);
+              return;
+            }
+
+            const labels = validData.map((_, i) => `Attempt ${i + 1}`);
+            const chartUtils = new ChartUtils(validData);
+
+            this.agentChartsData.push({
+              targetId,
+              testName: result.testName ?? `Test ID ${testId}`,
+              attemptResults: validData,
+
+              latencyChart: {
+                labels,
+                datasets: [{
+                  data: chartUtils.getLatencyData(),
+                  label: `Latency - Agent ${targetId}`,
+                  borderColor: getColorForAgent(targetId),
+                  fill: false
+                }]
+              },
+              latencyChartOptions: getChartOptions(
+                thresholdValue, selectedMetric, 'latency',
+                thresholdType, thresholdOperator
+              ),
+
+              jitterChart: {
+                labels,
+                datasets: [{
+                  data: chartUtils.getJitterData(),
+                  label: `Jitter - Agent ${targetId}`,
+                  borderColor: getColorForAgent(targetId),
+                  fill: false
+                }]
+              },
+              jitterChartOptions: getChartOptions(
+                thresholdValue, selectedMetric, 'jitter',
+                thresholdType, thresholdOperator
+              ),
+
+              throughputChart: {
+                labels,
+                datasets: [{
+                  data: chartUtils.getThroughputData(),
+                  label: `Throughput - Agent ${targetId}`,
+                  borderColor: getColorForAgent(targetId),
+                  fill: false
+                }]
+              },
+              throughputChartOptions: getChartOptions(
+                thresholdValue, selectedMetric, 'throughput',
+                thresholdType, thresholdOperator
+              )
+            });
+
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            console.error(`[onView] ❌ Erreur récupération tentative pour targetId ${targetId}:`, err);
+          }
+        });
+      });
+    },
+    error: (err) => {
+      console.error(`[onView] ❌ Erreur récupération target_ids pour testId ${testId}:`, err);
+    }
+  });
+}
+
+
+selectedChartData: {
+  targetId: number;
+  testName: string;
+  latencyChart: any;
+  jitterChart: any;
+  throughputChart: any;
+} | null = null;
 
   clearChartsData(): void {
   console.log('[clearChartsData] Réinitialisation des données des graphiques.');
@@ -387,100 +492,6 @@ private updateCharts(): void {
   this.throughputChart = { labels: [], datasets: [] };
 }
 
-
-  initChartsData(): void {
-    if (!this.chartLabels.length || !this.attemptResults.length) {
-      console.warn('[initChartsData] Aucune donnée pour initialiser les graphiques.');
-      return;
-    }
-
-    // Initialisation du graphique de latence
-    this.latencyChart = {
-      labels: this.chartLabels,
-      datasets: [{
-        label: 'Latency (ms)',
-        data: this.getLatencyData(),
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        fill: true
-      }]
-    };
-
-    // Initialisation du graphique de jitter
-    this.jitterChart = {
-      labels: this.chartLabels,
-      datasets: [{
-        label: 'Jitter (ms)',
-        data: this.getJitterData(),
-        borderColor: 'rgba(255, 159, 64, 1)',
-        backgroundColor: 'rgba(255, 159, 64, 0.2)',
-        fill: true
-      }]
-    };
-
-    // Initialisation du graphique de débit
-    this.throughputChart = {
-      labels: this.chartLabels,
-      datasets: [{
-        label: 'Throughput (Mbps)',
-        data: this.getThroughputData(),
-        borderColor: 'rgba(153, 102, 255, 1)',
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        fill: true
-      }]
-    };
-
-    // Mise à jour des graphiques
-    this.updateCharts();
-  }
-
-
-  getLatencyData(): number[] {
-    const result = this.attemptResults?.map((item, index) => {
-      const value = item.latency;
-      if (typeof value !== 'number') {
-        console.warn(`[getLatencyData] Valeur de latence invalide à l'index ${index} :`, value);
-      }
-      return typeof value === 'number' ? value : 0;
-    }) ?? [];
-
-    console.log('[getLatencyData] Résultat:', result);
-    return result;
-  }
-
-  getJitterData(): number[] {
-    const result = this.attemptResults?.map((item, index) => {
-      if (item.jitter === undefined || item.jitter === null) {
-        console.warn(`[getJitterData] Jitter manquant à l'index ${index}.`);
-      }
-      return item.jitter ?? 0;
-    }) ?? [];
-
-    console.log('[getJitterData] Résultat:', result);
-    return result;
-  }
-
-  getThroughputData(): number[] {
-    const result = this.attemptResults?.map((item, index) => {
-      const norm = this.normalizeThroughput(item.throughput);
-      if (typeof norm !== 'number') {
-        console.warn(`[getThroughputData] Valeur de débit anormale à l'index ${index} :`, item.throughput);
-      }
-      return norm;
-    }) ?? [];
-
-    console.log('[getThroughputData] Résultat:', result);
-    return result;
-  }
-
-hasValidChartData(chart: ChartData<'line'>): boolean {
-  const isValid = Array.isArray(chart?.datasets) &&
-         chart.datasets.length > 0 &&
-         Array.isArray(chart.datasets[0].data) &&
-         chart.datasets[0].data.length > 0;
-  console.log(`[DEBUG] Chart data valid: ${isValid}`, chart);
-  return isValid;
-}
 
 ngAfterViewInit() {
   const canvas = document.getElementById("latencyChart");
@@ -500,110 +511,52 @@ ngAfterViewInit() {
     });
   }
 
- normalizeThroughput(value?: number): number {
-  if (typeof value !== 'number' || value < 0) {
-    console.warn('[normalizeThroughput] Valeur invalide :', value);
-    return 0;
-  }
-  return value;
-}
-  private filterOutliers(data: number[], threshold = 3): number[] {
-    if (data.length === 0) return data;
-
-    const mean = data.reduce((a, b) => a + b, 0) / data.length;
-    const stdDev = Math.sqrt(data.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / data.length);
-
-    return data.map(val => {
-      const zScore = (val - mean) / stdDev;
-      return Math.abs(zScore) > threshold ? mean : val;
-    });
-  }
-
-private updateThresholdLine(threshold: number): void {
-  if (!this.chartOptions.plugins?.annotation?.annotations) {
-    this.chartOptions.plugins = {
-      ...this.chartOptions.plugins,
-      annotation: {
-        annotations: {}
-      }
-    };
-  }
-
-  this.chartOptions.plugins.annotation.annotations['thresholdLine'] = {
-    type: 'line',
-    yMin: threshold,
-    yMax: threshold,
-    borderColor: 'red',
-    borderWidth: 2,
-    label: {
-      content: `Seuil = ${threshold}`,
-      enabled: true,
-      position: 'end',
-      color: 'red'
-    }
-  };
-
-  this.chart?.update(); // Redessine la courbe avec la nouvelle ligne
-}
-
-getChartOptions(threshold: number | null, selectedMetric: string, currentMetric: string): any {
-  const showThreshold = threshold !== null && selectedMetric === currentMetric;
-
-  return {
-    responsive: true,
-    plugins: {
-      annotation: {
-        annotations: showThreshold
-          ? {
-              thresholdLine: {
-                type: 'line',
-                yMin: threshold,
-                yMax: threshold,
-                borderColor: 'red',
-                borderWidth: 2,
-                borderDash: [6, 6],
-                label: {
-                  enabled: true,
-                  content: `Seuil: ${threshold}`,
-                  position: 'start',
-                  backgroundColor: 'rgba(255,0,0,0.7)',
-                  color: 'white'
-                }
-              }
-            }
-          : {}
-      }
-    }
-  };
-}
-
 getThresholdForSelectedMetric(metric: string): number {
   if (this.selectedResult && this.selectedResult.selectedMetric === metric) {
     return this.selectedResult.thresholdValue || 0;
   }
   return 0;
 }
-
-
   closePopup(): void {
     this.selectedResult = null;
   }
+  
+trackByTestTargetId(index: number, result: TestResult): string {
+  return `${result.test_id}_${result.target_id}`;
+}
 
-  openPopup(result: TestResult): void {
-  console.log('[openPopup] Selected TestResult:', result);  // 👈 ajoute ceci
+openPopup(result: TestResult): void {
+  console.log('[openPopup] Selected TestResult:', result);
 
   this.selectedResult = result;
 
-  // ✅ recharge les détails depuis le backend
   if (result.test_id) {
-    console.log('[openPopup] Appel refreshTestFromBackend avec ID:', result.test_id); // 👈 ajoute ceci aussi
+    console.log('[openPopup] Appel refreshTestFromBackend avec ID:', result.test_id);
     this.refreshTestFromBackend(result.test_id);
+
+    const qos = this.qosResultsMap[result.test_id];
+
+    if (qos && qos.length > 0) {
+  const matchingQos = qos.find(q => Array.isArray(q.target_id) && q.target_id.includes(result.target_id));
+
+  if (matchingQos) {
+    this.selectedTargetId = String(matchingQos.target_id);
+    console.log('[openPopup] selectedTargetId initialisé à :', this.selectedTargetId);
+  } else {
+    this.selectedTargetId = String(result.target_id); // fallback
+    console.warn('[openPopup] Aucun QoS direct pour ce target, fallback sur result.target_id');
+  }
+
+} else {
+  this.selectedTargetId = String(result.target_id);
+  console.warn('[openPopup] Pas de QoS data, fallback sur result.target_id');
+}
+
+
   } else {
     console.warn('[openPopup] test_id manquant');
   }
 }
-
-
   getStatusClass(status?: string): string {
     switch ((status ?? '').toLowerCase()) {
       case 'completed': return 'tag-success';

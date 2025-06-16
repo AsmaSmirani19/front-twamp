@@ -1,18 +1,41 @@
-.nav {
+.sidebar-wrapper {
+  background-color: #a1b5d8 !important;
+  position: fixed; /* ou absolute si tu veux qu'elle soit fixe */
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 280px;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  color: #f0f0f0 !important;
+  border: none !important;
+  /* ajout d'une ombre bleue qui dépasse la largeur */
+  box-shadow: 0 0 25px 15px rgba(161, 181, 216, 0.7);
+  z-index: 1000;
+}
+
+.nav.responsive-nav {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
-  flex-direction: column; /* Disposition en colonne */
-  gap: 15px;  /* Espace entre les éléments */
-  padding-top: 20px; /* Espace en haut du menu */
+  flex-direction: column;
+  gap: 15px;
+  padding-top: 20px;
+  background-color: transparent; /* laisse passer le bleu du parent */
+  height: 100%;
+  width: 100%;
+  color: inherit;
 }
 
 li {
-  padding: 6px 20px; /* Ajuste l'espace autour des éléments */
-  transition: background-color 0.3s;
+  padding: 6px 20px;
+  transition: background-color 0.3s, color 0.3s;
   display: flex;
   align-items: center;
+  border-radius: 4px;
+  background-color: transparent; /* conserve le bleu uniforme */
 }
 
 a {
@@ -26,6 +49,7 @@ a {
 a i {
   font-size: 18px;
   margin-right: 10px;
+  color: #a1b5d8; /* icônes bleu doux */
 }
 
 a p {
@@ -33,20 +57,20 @@ a p {
   font-size: 13px;
 }
 
-/* Suppression de l'effet au survol */
 li:hover {
-  background-color: transparent; /* Pas de changement de couleur au survol */
+  background-color: #a7bccf; /* bleu pastel clair au hover */
+  color: #084a7c; /* texte bleu foncé au hover */
 }
 
-/* Suppression de la couleur au clic */
 li:active {
-  background-color: transparent; /* Pas de changement de couleur au clic */
+  background-color: #4282aa; /* bleu clair moyen */
 }
 
+/* dropdown : couleur bleue uniforme */
 li .dropdown-menu {
   display: none;
   flex-direction: column;
-  background-color: #34495e;
+  background-color: #a1b5d8 !important; /* bleu uniforme */
   padding: 10px 0;
   border-radius: 4px;
   margin-top: 10px;
@@ -54,25 +78,24 @@ li .dropdown-menu {
   left: 100%;
   top: 0;
   width: 200px;
+  color: #f0f0f0 !important;
+  z-index: 1000;
 }
 
 li:hover .dropdown-menu {
   display: flex;
 }
 
-.notification {
-  background-color: #e74c3c;
-  border-radius: 10px;
-  padding: 2px 6px;
-  font-size: 12px;
-  margin-left: auto;
+/* notification badge : cacher le rouge d'origine et mettre bleu */
+.notification, .badge, .source, .label, .mat-badge {
+  background-color: #a1b5d8 !important; /* bleu uniforme */
+  color: #f0f0f0 !important; /* texte clair */
+  border: none !important;
+  box-shadow: none !important;
 }
 
+/* séparer : bordure bleu uniforme */
 .separator {
-  border-top: 1px solid #7f8c8d;
+  border-top: 1px solid #a1b5d8 !important;
   margin: 10px 0;
-}
-
-.sidebar-wrapper {
-  background-color: #94949f !important;
 }
