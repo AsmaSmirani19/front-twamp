@@ -25,6 +25,7 @@
               "node_modules/perfect-scrollbar/css/perfect-scrollbar.css",
               "node_modules/animate.css/animate.min.css",
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/chartist/dist/chartist.min.css", 
               "src/assets/sass/light-bootstrap-dashboard.scss",
               "src/assets/css/demo.css"
             ],

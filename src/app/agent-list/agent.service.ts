@@ -5,9 +5,6 @@ import { environment } from '../../environments/environment';
 import { Agent } from './model';
 
 
-
-
-
 @Injectable({
   providedIn: 'root'
 })

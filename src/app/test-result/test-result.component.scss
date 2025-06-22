@@ -14,6 +14,7 @@
   min-height: 450px;
   width: 100%;
   position: relative;
+  font-size: 1.1rem;
 }
 
 /* Canvas responsive */
@@ -161,242 +162,198 @@
   }
 }
 
-/* ==================== */
-/* Styles pour la POPUP  */
-/* ==================== */
 
-/* Overlay de fond sans flou */
+
+/* === Overlay === */
 .pinterest-popup-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6); /* Noir semi-transparent */
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35); /* Fond sombre doux */
   z-index: 1050;
-  animation: fadeIn 0.3s ease-out;
 }
 
-/* Carte de la popup */
+/* === Drawer principale à droite === */
 .pinterest-popup-card {
-  width: 90%;              /* largeur relative à l’écran */
-  max-width: 900px;        /* augmente un peu la largeur maximale */
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  overflow-y: auto;
-  max-height: 90vh;
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  padding: 1rem; /* optionnel : ajoute un peu d'espace intérieur */
-}
-
-
-
-/* Le reste du CSS reste inchangé */
-
-.popup-header {
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 10;
-  
-  h4 {
-    margin: 0;
-    color: #2c3e50;
-    font-size: 1.4rem;
-    font-weight: 600;
-    
-    small {
-      font-size: 1rem;
-      color: #7f8c8d;
-      font-weight: 400;
-    }
-  }
-}
-
-
-
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #95a5a6;
-  transition: all 0.2s;
-  padding: 0 0.5rem;
-  
-  &:hover {
-    color: #e74c3c;
-    transform: scale(1.1);
-  }
-}
-
-
-.popup-body {
-  padding: 1.5rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  column-gap: 2rem;  /* Espace horizontal entre colonnes */
-  row-gap: 1rem;     /* Espace vertical entre lignes */
-  align-items: start; /* Alignement en haut */
-  
-  p {
-     margin: 0;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f1f1f1;
+  right: 0;
+  height: 100%;
+  width: 65vw; /* ➕ Large mais pas trop */
+  max-width: 1200px;
+  background: #f9fbff; /* Très doux, basé sur #a1b5d8 */
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  box-shadow: -6px 0 30px rgba(0, 0, 0, 0.15);
   display: flex;
-  justify-content: space-between;
-  min-width: 200px;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-    
-    strong {
-      color: #2c3e50;
-      font-weight: 500;
-      margin-right: 1rem;
-      white-space: nowrap; /* Empêche le retour à la ligne */
-    }
-      
-    .tag {
-      margin-left: 0.5rem;
-    }
-  }
+  flex-direction: column;
+  font-size: 1.25rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #2e3d55;
+  overflow-y: auto;
+  padding: 2rem;
+  animation: slideInDrawer 0.4s ease-out;
 }
 
 /* Animation */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .popup-body {
-    grid-template-columns: 1fr;
+@keyframes slideInDrawer {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
-/* Styles supplémentaires pour les valeurs */
-.text-success {
-  color: #16a34a;
-}
-
-.text-warning {
-  color: #ca8a04;
-}
-
-.text-danger {
-  color: #dc2626;
-}
-.pinterest-popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
+/* === Header === */
 .popup-header {
+  background-color: #dce6f4; /* ✅ plus clair que #a1b5d8 */
+  color: #2e3d55;
+  font-weight: 700;
+  font-size: 2.2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #eee;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .close-btn {
-  background: none;
+  font-size: 2rem;
+  background: transparent;
   border: none;
-  font-size: 24px;
+  color: #ffffff;
   cursor: pointer;
-  color: #666;
-  &:hover {
-    color: #333;
-  }
+  transition: color 0.3s, transform 0.25s;
+}
+.close-btn:hover {
+  color: #f87171;
+  transform: scale(1.2);
 }
 
+/* === Body === */
 .popup-body {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  color: #2e3d55;
+  overflow: visible;
+  padding-bottom: 2rem;
+  font-size: 1.2rem;
 }
 
-/* Pleine largeur pour la section d'infos */
-.test-info.full-width {
+/* === Bloc infos === */
+.parameters-tab {
   width: 100%;
+  background: #eaf0fb;
+  padding: 2rem 2.5rem;
+  border-radius: 20px;
+  box-shadow: inset 0 0 12px rgba(161, 181, 216, 0.1);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #ddd;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem 2rem;
+  font-size: 1.15rem;
 }
 
-/* Centrage des boutons de métriques */
+.parameters-tab p {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+.parameters-tab p strong {
+  color: #607aa1;
+}
+
+/* === Tableau === */
+.simple-metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(2, 128, 144, 0.05);
+  font-size: 1.3rem;
+  color: #1b262c;
+  margin-bottom: 2rem;
+}
+.simple-metrics-table th {
+  background-color: #c6dbf0;
+  padding: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+  color: #2e3d55;
+}
+.simple-metrics-table td {
+  padding: 1.2rem;
+  text-align: center;
+  border-top: 1px solid #d0dbe9;
+}
+
+/* === Onglets / boutons === */
 .metric-tabs.center-tabs {
   display: flex;
-  justify-content: center;
+  gap: 1.2rem;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 1rem 0;
-  border-bottom: 1px solid #ddd;
-
-  button {
-    padding: 8px 16px;
-    border: 1px solid #ddd;
-    background: white;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.3s;
-    
-    &.active {
-      background: #3f51b5;
-      color: white;
-      border-color: #3f51b5;
-    }
-  }
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+.metric-tabs.center-tabs button {
+  background-color: #e6edfa;
+  border: 2px solid #a1b5d8;
+  color: #2e3d55;
+  padding: 1rem 2.5rem;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+.metric-tabs.center-tabs button.active {
+  background-color: #a1b5d8;
+  color: white;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-  .stat-item {
-    background: #f5f5f5;
-    padding: 12px;
-    border-radius: 8px;
-    .stat-label {
-      display: block;
-      font-size: 12px;
-      color: #666;
-    }
-    .stat-value {
-      font-weight: bold;
-      font-size: 16px;
-    }
-  }
+/* === Graphique === */
+.chart-wrapper {
+  margin-top: 1rem;
+  width: 100%;
+}
+.chart-container {
+  background: #f4f7fc;
+  border: 2px solid #d3dff1;
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 28px rgba(161, 181, 216, 0.1);
+  min-height: 500px;
+  width: 100%;
+  font-size: 1.2rem;
 }
 
+/* === Responsive Mobile === */
+@media (max-width: 768px) {
+  .pinterest-popup-card {
+    width: 100%;
+    border-radius: 0;
+  }
 
+  .parameters-tab {
+    grid-template-columns: 1fr;
+  }
 
-/* Status badges */
-.tag-success { color: #28a745; }
-.tag-warning { color: #ffc107; }
-.tag-danger { color: #dc3545; }
-.tag-secondary { color: #6c757d; }
+  .simple-metrics-table th,
+  .simple-metrics-table td {
+    font-size: 1.2rem;
+    padding: 1rem;
+  }
 
+  .popup-header {
+    font-size: 1.8rem;
+  }
+
+  .metric-tabs.center-tabs {
+    flex-direction: column;
+    align-items: center;
+  }
+}

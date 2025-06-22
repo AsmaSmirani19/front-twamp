@@ -4,17 +4,18 @@
     <p class="category">{{ subtitle }}</p>
   </div>
   <div class="content">
-    <div [attr.id]="chartId" class="ct-chart {{ chartClass }}"></div>
-
+    <!-- Conteneur du graphique -->
+    <div [id]="chartId" [ngClass]="['ct-chart', chartClass ? chartClass : '']"></div>
     <div class="footer">
       <div class="legend">
         <span *ngFor="let item of legendItems">
-          <i [ngClass]="item.imageClass"></i> {{ item.title }}
+          <i *ngIf="item && isValidClass(item.imageClass)" [ngClass]="item.imageClass"></i>
+
         </span>
       </div>
-      <hr *ngIf="withHr">
+      <hr *ngIf="withHr" />
       <div class="stats">
-        <i [ngClass]="footerIconClass"></i> {{ footerText }}
+        <i *ngIf="footerIconClass" [ngClass]="footerIconClass"></i> {{ footerText }}
       </div>
     </div>
   </div>

@@ -1,0 +1,104 @@
+// 💡 Style générique commun à toutes les cartes modernes
+.card-modern {
+  background: linear-gradient(135deg, #dfe8f3, #f4f7fb);
+  color: #5a6f91;
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+  box-shadow: 0 10px 30px rgba(161, 181, 216, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 45px rgba(161, 181, 216, 0.35);
+  }
+
+  h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 1.15rem;
+    color: #4a5e80;
+  }
+
+  .subtitle, .footer-text {
+    font-size: 0.95rem;
+    color: #667ea6;
+  }
+
+  i, svg, .chart {
+    font-size: 1.6rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #5a6f91;
+    fill: #5a6f91;
+    stroke: #5a6f91;
+  }
+}
+
+// 🎨 Carte bleue
+.card-modern-blue {
+  @extend .card-modern;
+
+  .ct-series-a .ct-slice-donut {
+    stroke: #a1b5d8 !important;
+  }
+
+  .ct-series-b .ct-slice-donut {
+    stroke: #c8f2dc !important;
+  }
+}
+
+// 🎨 Carte lavande
+.card-modern-lavender {
+  @extend .card-modern;
+
+  .ct-series-a .ct-bar {
+    stroke: #2196F3 !important;
+  }
+
+  .ct-series-b .ct-bar {
+    stroke: #FF9800 !important;
+  }
+}
+
+// 📐 Taille plus grande pour les graphiques
+.chart-container-large {
+  height: 450px; // Augmentable à volonté
+}
+
+// 📊 Statistiques globales (modernisées)
+.stats-card {
+  background: linear-gradient(135deg, #f0f4f8, #ffffff);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 10px 20px rgba(161, 181, 216, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(161, 181, 216, 0.3);
+  }
+
+  h6 {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #7a8ba6;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  h2 {
+    font-weight: 700;
+    font-size: 2.5rem;
+    color: #2c3e50;
+    font-family: 'Roboto Mono', monospace; /* exemple autre police */
+  }
+}
+
+/* Espace plus important au-dessus des graphes */
+.mt-6 {
+  margin-top: 4.5rem !important;
+}
+

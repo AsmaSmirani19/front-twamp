@@ -12,7 +12,7 @@ export const ROUTES: RouteInfo[] = [
     { path: '/agent', title: 'Agent List ',  icon:'pe-7s-note2', class: '' },
     { path: '/agent-group', title: 'Agent Group ',  icon:'pe-7s-note2', class: '' },
     { path: '/quick-test', title: 'Quick Test ',  icon:'pe-7s-note2', class: '' },
-    { path: '/planned-test', title: 'Planned Test ',  icon:'pe-7s-note2', class: '' },
+    { path: '/planned-test', title: 'Test Plan ',  icon:'pe-7s-note2', class: '' },
     { path: '/test-result', title: 'Test Result ',  icon:'pe-7s-note2', class: '' },
     { path: '/test-profile', title: 'Test Profile ',  icon:'pe-7s-note2', class: '' },
     { path: '/threshold', title: 'Threshold ',  icon:'pe-7s-note2', class: '' },

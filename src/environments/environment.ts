@@ -30,5 +30,10 @@ export const environment = {
   realTargetIdApiUrl: 'http://localhost:5000/api/tests/real-target',
 
 
+
+  testStatsApiUrl: 'http://localhost:5000/api/test-stats',
+  agentStatusApiUrl: 'http://localhost:5000/api/agents/status',
+
+
 };
 

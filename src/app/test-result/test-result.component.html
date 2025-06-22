@@ -117,7 +117,7 @@
       <canvas *ngIf="hasValidChartData(chartData.latencyChart); else noLatency"
               baseChart
               [data]="chartData.latencyChart"
-              [options]="chartData.latencyChart.options"
+              [options]="chartData.latencyChartOptions"
               [type]="'line'">
       </canvas>
       <ng-template #noLatency>
@@ -129,7 +129,7 @@
       <canvas *ngIf="hasValidChartData(chartData.jitterChart); else noJitter"
               baseChart
               [data]="chartData.jitterChart"
-              [options]="chartData.jitterChart.options"
+              [options]="chartData.jitterChartOptions"
               [type]="'line'">
       </canvas>
       <ng-template #noJitter>
@@ -141,7 +141,7 @@
       <canvas *ngIf="hasValidChartData(chartData.throughputChart); else noThroughput"
               baseChart
               [data]="chartData.throughputChart"
-              [options]="chartData.throughputChart.options"
+              [options]="chartData.throughputChartOptions"
               [type]="'line'">
       </canvas>
       <ng-template #noThroughput>

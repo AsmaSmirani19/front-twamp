@@ -1,5 +1,7 @@
 import { ChartOptions, ChartData } from 'chart.js';
 
+
+
 // Définition de l'interface AttemptResult pour le typage
 export interface AttemptResult {
   test_id: number;
@@ -13,9 +15,19 @@ export interface AttemptResult {
 
 export function createChartOptions(
   selectedMetric: string,
-  getThreshold: (metric: string) => number | null
+  getThreshold: (metric: string) => number | null,
+  thresholdOperator?: string,
+  thresholdType?: string
 ): ChartOptions<'line'> {
   const threshold = getThreshold(selectedMetric);
+
+  console.log('[🔎 createChartOptions] selectedMetric =', selectedMetric);
+  console.log('[🔎 createChartOptions] threshold =', threshold);
+
+  // Construction du texte du label selon les infos dispo
+  const labelText = threshold !== null && thresholdOperator && thresholdType
+    ? `Seuil ${thresholdOperator} (${selectedMetric}) : ${threshold} (valeurs doivent être ${thresholdType})`
+    : `Seuil = ${threshold}`;
 
   const options: ChartOptions<'line'> = {
     responsive: true,
@@ -49,7 +61,24 @@ export function createChartOptions(
         }
       },
       annotation: {
-        annotations: {}
+        annotations: threshold !== null && !isNaN(threshold) && threshold > 0 ? {
+          thresholdLine: {
+            type: 'line',
+            scaleID: 'y',
+            value: threshold,
+            borderColor: 'red',
+            borderWidth: 2,
+            borderDash: [6, 6],
+            label: {
+              enabled: true,
+              content: labelText,
+              position: 'center',
+              color: 'red',
+              font: { weight: 'bold' },
+              backgroundColor: 'rgba(255, 255, 255, 0.7)'
+            }
+          }
+        } : {}
       }
     },
     scales: {
@@ -62,56 +91,65 @@ export function createChartOptions(
         display: true,
         title: { display: true, text: 'Valeur' },
         beginAtZero: true,
-        type: 'linear'
+        type: 'linear',
+        min: 0,
+        max: 10
       }
     }
   };
 
-  if (threshold != null && threshold > 0) {
-    options.plugins.annotation.annotations = {
-      thresholdLine: {
-        type: 'line',
-        yMin: threshold,
-        yMax: threshold,
-        borderColor: 'red',
-        borderWidth: 2,
-        label: {
-          content: `Seuil = ${threshold}`,
-          enabled: true,
-          position: 'center',
-          color: 'red',
-          font: { weight: 'bold' }
-        }
-      }
-    };
-  }
-
   return options;
 }
 
+
+function getUnitForMetric(metric: string): string {
+  switch (metric) {
+    case 'throughput': return 'kbps';
+    case 'latency':
+    case 'jitter':
+    default: return 'ms';
+  }
+}
+
 export function getChartOptions(
-  threshold: number | null,
+  thresholdInput: number | { Float64?: number; Valid?: boolean } | null,
   selectedMetric: string,
   currentMetric: string,
   thresholdType?: string,
   thresholdOperator?: string
 ): ChartOptions<'line'> {
+  // 🧠 Extraction sécurisée du seuil, qu'il soit brut ou structuré (SQL)
+  const threshold: number | null = typeof thresholdInput === 'number'
+    ? thresholdInput
+    : (thresholdInput && thresholdInput.Valid ? thresholdInput.Float64 ?? null : null);
+
   const showThreshold = threshold !== null && currentMetric === selectedMetric;
+  const unit = getUnitForMetric(currentMetric);
+
+  console.log('[🔍 DEBUG] currentMetric:', currentMetric);
+  console.log('[🔍 DEBUG] selectedMetric:', selectedMetric);
+  console.log('[🔍 DEBUG] threshold:', threshold);
+  console.log('[🔍 DEBUG] showThreshold:', showThreshold);
 
   const labelText = showThreshold
-    ? `Seuil ${thresholdOperator ?? ''} (${selectedMetric}) : ${threshold} ms (valeurs doivent être ${thresholdType ?? ''} ${threshold} ms)`
+    ? `Seuil ${thresholdOperator ?? ''} (${selectedMetric}) : ${threshold} ${unit} (valeurs doivent être ${thresholdType ?? ''} ${threshold} ${unit})`
     : '';
+
+  if (showThreshold) console.log('[getChartOptions] labelText:', labelText);
 
   return {
     responsive: true,
     maintainAspectRatio: false,
-    elements: { line: { tension: 0.3 }, point: { radius: 3, hoverRadius: 5 } },
+    elements: {
+      line: { tension: 0.3 },
+      point: { radius: 3, hoverRadius: 5 }
+    },
     plugins: {
       legend: { display: true, position: 'top' },
       tooltip: { enabled: true, mode: 'index', intersect: false },
-      annotation: {
-        annotations: showThreshold
-          ? {
+      annotation: showThreshold
+        ? {
+            annotations: {
               thresholdLine: {
                 type: 'line',
                 scaleID: 'y',
@@ -130,15 +168,26 @@ export function getChartOptions(
                 }
               }
             }
-          : {}
-      }
-    },
+          }
+        : {}
+    } as unknown as { [key: string]: any },
     scales: {
-      x: { display: true, title: { display: true, text: 'Tentatives' } },
-      y: { display: true, title: { display: true, text: 'Valeur (ms)' }, beginAtZero: true, type: 'linear' }
+      x: {
+        display: true,
+        title: { display: true, text: 'Tentatives' }
+      },
+      y: {
+        display: true,
+        title: { display: true, text: `Valeur (${unit})` },
+        beginAtZero: true,
+        type: 'linear'
+      }
     }
   };
 }
+
+
+
 
 export function hasValidChartData(chart: ChartData<'line'>): boolean {
   const isValid =
@@ -189,30 +238,39 @@ export class ChartUtils {
     });
   }
 
-  private updateThresholdLine(threshold: number): void {
-    if (!this.chartOptions.plugins?.annotation?.annotations) {
-      this.chartOptions.plugins = {
-        ...this.chartOptions.plugins,
-        annotation: { annotations: {} }
-      };
-    }
-
-    this.chartOptions.plugins.annotation.annotations['thresholdLine'] = {
-      type: 'line',
-      yMin: threshold,
-      yMax: threshold,
-      borderColor: 'red',
-      borderWidth: 2,
-      label: {
-        content: `Seuil = ${threshold}`,
-        enabled: true,
-        position: 'end',
-        color: 'red'
-      }
-    };
-
-    this.chart?.update();
+private updateThresholdLine(threshold: number): void {
+  if (!this.chartOptions.plugins) {
+    this.chartOptions.plugins = {};
   }
+  if (!this.chartOptions.plugins.annotation) {
+    this.chartOptions.plugins.annotation = { annotations: {} };
+  }
+  if (!this.chartOptions.plugins.annotation.annotations) {
+    this.chartOptions.plugins.annotation.annotations = {};
+  }
+
+  // Maintenant on peut définir la ligne de seuil
+  this.chartOptions.plugins.annotation.annotations['thresholdLine'] = {
+    type: 'line',
+    scaleID: 'y',
+    value: threshold,
+    borderColor: 'red',
+    borderWidth: 2,
+    borderDash: [6, 6],
+    label: {
+      enabled: true,
+      content: `Seuil = ${threshold}`,
+      position: 'center',
+      color: 'red',
+      font: { weight: 'bold' },
+      backgroundColor: 'rgba(255, 255, 255, 0.7)'
+    }
+  };
+
+  // Si tu as accès à l'instance du chart, faire un update
+  this.chart?.update();
+}
+
 
 getLatencyData(): number[] {
   return this.attemptResults?.map((item, index) => {
@@ -236,9 +294,6 @@ getThroughputData(): number[] {
   }) ?? [];
 }
 
-
-
-
 initChartsData(attemptResults: AttemptResult[]) {
   if (!attemptResults.length) {
     console.warn('[initChartsData] Aucune donnée pour initialiser les graphiques.');
@@ -247,6 +302,15 @@ initChartsData(attemptResults: AttemptResult[]) {
 
   const chartLabels = attemptResults.map((_, idx) => `Point ${idx + 1}`);
 
+  // 💡 Fonction pour récupérer les seuils par métrique
+  const getThreshold = (metric: string): number | null => {
+    if (metric === 'latency') return 100;        // Exemple
+    if (metric === 'jitter') return 30;
+    if (metric === 'throughput') return 20;
+    return null;
+  };
+
+  // 📊 LATENCY
   const latencyChart: ChartData<'line'> = {
     labels: chartLabels,
     datasets: [
@@ -259,17 +323,13 @@ initChartsData(attemptResults: AttemptResult[]) {
       }
     ]
   };
+  const latencyChartOptions = createChartOptions('latency', getThreshold);
 
-  const latencyChartOptions: ChartOptions<'line'> = {
-    responsive: true,
-    plugins: {
-      legend: { display: true }
-    },
-    scales: {
-      y: { beginAtZero: true }
-    }
-  };
+  this.chartOptions = latencyChartOptions;
+  this.updateThresholdLine(getThreshold('latency') ?? 0);
 
+
+  // 📊 JITTER
   const jitterChart: ChartData<'line'> = {
     labels: chartLabels,
     datasets: [
@@ -282,17 +342,12 @@ initChartsData(attemptResults: AttemptResult[]) {
       }
     ]
   };
+  const jitterChartOptions = createChartOptions('jitter', getThreshold);
 
-  const jitterChartOptions: ChartOptions<'line'> = {
-    responsive: true,
-    plugins: {
-      legend: { display: true }
-    },
-    scales: {
-      y: { beginAtZero: true }
-    }
-  };
+  this.chartOptions = jitterChartOptions;
+  this.updateThresholdLine(getThreshold('jitter') ?? 0);
 
+  // 📊 THROUGHPUT
   const throughputChart: ChartData<'line'> = {
     labels: chartLabels,
     datasets: [
@@ -305,16 +360,11 @@ initChartsData(attemptResults: AttemptResult[]) {
       }
     ]
   };
+  const throughputChartOptions = createChartOptions('throughput', getThreshold);
 
-  const throughputChartOptions: ChartOptions<'line'> = {
-    responsive: true,
-    plugins: {
-      legend: { display: true }
-    },
-    scales: {
-      y: { beginAtZero: true }
-    }
-  };
+  this.chartOptions = throughputChartOptions;
+  this.updateThresholdLine(getThreshold('throughput') ?? 0);
+
 
   return {
     latencyChart,
@@ -325,5 +375,8 @@ initChartsData(attemptResults: AttemptResult[]) {
     throughputChartOptions
   };
 }
+
+
+
 
 }
